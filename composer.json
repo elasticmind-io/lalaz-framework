@@ -1,9 +1,11 @@
 {
     "name": "elasticmind/lalaz-framework",
-    "type": "library",
+    "type": "project",
+    "description": "The Lalaz framework.",
+    "keywords": ["lalaz", "framework"],
     "autoload": {
         "psr-4": {
-            "Lalaz\\": "src"
+            "Lalaz\\": "src/"
         }
     },
     "authors": [
@@ -15,5 +17,12 @@
     "require": {
         "php": "^8.2",
         "twig/twig": "^3.0"
-    }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }
