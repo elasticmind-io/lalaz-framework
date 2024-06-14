@@ -1,0 +1,19 @@
+{
+    "name": "elasticmind/lalaz-framework",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Lalaz\\": "src"
+        }
+    },
+    "authors": [
+        {
+            "name": "Gregory Serrao",
+            "email": "ola@elasticmind.io"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "twig/twig": "^3.0"
+    }
+}
