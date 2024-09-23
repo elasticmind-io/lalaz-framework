@@ -1,0 +1,12 @@
+version: '3.5'
+
+services:
+  mariadb:
+    image: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+      MYSQL_DATABASE: lalaz
+    ports:
+      - "3306:3306"
