@@ -7,7 +7,7 @@ use Lalaz\Routing\Router;
 use Lalaz\Logging\Logger;
 use PHPUnit\Framework\TestCase;
 
-class LalazBaseTest extends TestCase
+abstract class LalazBaseTest extends TestCase
 {
     protected $app;
 
