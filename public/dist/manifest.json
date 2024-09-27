@@ -1,0 +1,16 @@
+{
+  "assets/css/styles.css": {
+    "file": "css/styles.fNCE5DMw.css",
+    "src": "assets/css/styles.css",
+    "isEntry": true
+  },
+  "assets/js/main.js": {
+    "file": "js/main.BYLOuhG-.js",
+    "name": "main",
+    "src": "assets/js/main.js",
+    "isEntry": true
+  },
+  "assets/img/logo.png": {
+    "file": "img/logo.png"
+  }
+}
