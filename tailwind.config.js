@@ -3,6 +3,7 @@ export default {
   content: [
     './src/**/*.{html,js,php,twig}'
   ],
+  darkMode: 'selector',
   theme: {
     extend: {},
   },

@@ -1,39 +1,68 @@
 {% extends "layout.twig" %}
 
 {% block content %}
-  <section id="componentHtmlContainer" style="height:min-content" class="w-full">
-    <div class="flex flex-wrap">
-      <div class="flex w-full flex-col md:w-1/2 bg-[#E0e0e0]">
-        <div class="flex justify-center pt-12 md:-mb-24 md:justify-start md:pl-12">
-          <img src="{{ asset('assets/img/logo.png') }}" alt= "" width="300">
-        </div>
-
-        <div class="lg:w-[28rem] mx-auto my-auto flex flex-col justify-center pt-8 md:justify-start md:px-6 md:pt-0">
-          <p class="text-left text-3xl font-bold">Faca seu Login</p>
-          <p class="mt-2 text-left text-gray-500">Por favor forneca suas credenciais abaixo.</p>
-          <form class="flex flex-col pt-3 md:pt-8">
-            <div class="flex flex-col pt-4">
-              <div class="focus-within:border-b-gray-500 relative flex overflow-hidden border-b-2 transition">
-                <input type="email" id="login-email" class="w-full flex-1 appearance-none border-gray-300 bg-white px-4 py-2 text-base text-gray-700 placeholder-gray-400 focus:outline-none" placeholder="Email">
-              </div>
-            </div>
-            <div class="mb-12 flex flex-col pt-4">
-              <div class="focus-within:border-b-gray-500 relative flex overflow-hidden border-b-2 transition">
-                <input type="password" id="login-password" class="w-full flex-1 appearance-none border-gray-300 bg-white px-4 py-2 text-base text-gray-700 placeholder-gray-400 focus:outline-none" placeholder="Password">
-              </div>
-            </div>
-            <button type="submit" class="w-full rounded-lg bg-gray-900 px-4 py-2 text-center text-base font-semibold text-white shadow-md ring-gray-500 ring-offset-2 transition focus:ring-2">Log in</button>
-          </form>
-        </div>
+	<div
+		class="min-h-screen bg-gradient-to-br from-white to-gray-100 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
+		<div class="text-center mt-16">
+      <div class="w-full m-auto">
+        <img class="m-auto text-center" src="{{ asset('assets/img/logo.svg') }}" alt="Lalaz Framework Logo">
       </div>
+			<h1 class="text-4xl font-extrabold text-gray-900 sm:text-5xl lg:text-6xl mb-6"> Easy Development, Simple Deployment</h1>
+			<p class="text-xl text-gray-600 max-w-3xl mx-auto mb-12">
+        a curated collection of tools and utilities designed to enhance your coding experience and streamline project creation.
+			</p>
 
-      <div class="pointer-events-none relative hidden h-screen select-none bg-black md:block md:w-1/2">
-        <div class="absolute bottom-0 z-10 px-8 text-white opacity-100">
-          <p class="mb-8 text-4xl font-semibold leading-10">Seu carro, sua liberdade!</p>
-          <p class="">Burb</p>
-          <p class="mb-7 text-sm opacity-70">Locacao de Veiculos</p>
-        </div>
-      </div>
-    </div>
-  </section>
+			<div class="flex justify-center space-x-4 mb-16">
+				<a class="flex max-w-fit items-center justify-center space-x-2 rounded-full border border-gray-300 bg-white px-5 py-2 text-sm text-gray-600 shadow-md transition-colors duration-300 hover:border-gray-800" href="https://github.com/elasticmind-io/lalaz" target="_blank" rel="noopener noreferrer">
+					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewbox="0 0 24 24" class="">
+						<path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path>
+					</svg>
+					<p>Star on GitHub</p>
+				</a>
+			</div>
+		</div>
+
+		<div
+			class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto">
+			<div class="bg-white shadow-lg rounded-xl p-8 hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
+				<div class="flex items-center mb-4">
+					<svg class="w-8 h-8 text-blue-600 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h18M3 10h18M3 15h18M3 20h18"></path>
+					</svg>
+					<h2 class="text-2xl font-semibold text-gray-900">Documentation</h2>
+				</div>
+				<p class="text-gray-600 mb-6">
+					Find comprehensive guides and in-depth information to help you build your Lalaz projects with ease.
+				</p>
+				<a href="#" class="text-blue-600 hover:text-blue-800 inline-flex items-center font-medium">
+					Read the Docs
+					<svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path>
+					</svg>
+				</a>
+			</div>
+
+			<div class="bg-white shadow-lg rounded-xl p-8 hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
+				<div class="flex items-center mb-4">
+					<svg class="w-8 h-8 text-green-600 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+					</svg>
+					<h2 class="text-2xl font-semibold text-gray-900">Learn</h2>
+				</div>
+				<p class="text-gray-600 mb-6">
+					Take an interactive course with quizzes and challenges to get hands-on experience building with Lalaz.
+				</p>
+				<a href="#" class="text-green-600 hover:text-green-800 inline-flex items-center font-medium">
+					Start Learning
+					<svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path>
+					</svg>
+				</a>
+			</div>
+		</div>
+
+		<footer class="mt-16 text-center text-gray-500">
+			<p>&copy; 2024 Lalaz. Easy Development, Simple Deployment.</p>
+		</footer>
+	</div>
 {% endblock %}
