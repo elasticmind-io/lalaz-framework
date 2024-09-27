@@ -11,6 +11,7 @@
 .phpactor.json
 .phpunit.result.cache
 package-lock.json
+composer.lock
 Homestead.json
 Homestead.yaml
 auth.json
