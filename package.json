@@ -1,0 +1,19 @@
+{
+  "name": "lalaz",
+  "version": "1.0.0",
+  "description": "Lalaz is a MVC based web application framework.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "watch": "vite build --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "alpinejs": "^3.14.1",
+    "vite": "^5.4.8"
+  }
+}

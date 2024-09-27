@@ -1,16 +1,39 @@
 {% extends "layout.twig" %}
 
 {% block content %}
-  <main class="grid min-h-full place-items-center bg-white px-6 py-24 sm:py-32 lg:px-8">
-    <div class="text-center">
-      <img class="mx-auto" src="/public/img/lalaz.svg" alt="Lalaz Logo">
-      <p class="mt-6 text-base leading-7 text-gray-900 font-semibold">Lalaz - MVC made simple!</p>
-      <h1 class="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">Welcome aboard</h1>
-      <p class="mt-2 text-base leading-7 text-gray-600">As we say keep it simple and stupid :p</p>
-      <div class="mt-10 flex items-center justify-center gap-x-6">
-        <a href="#" class="rounded-md bg-cyan-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">Check Docs</a>
-        <a href="#" class="text-sm font-semibold text-gray-900">Github <span aria-hidden="true">&rarr;</span></a>
+  <section id="componentHtmlContainer" style="height:min-content" class="w-full">
+    <div class="flex flex-wrap">
+      <div class="flex w-full flex-col md:w-1/2 bg-[#E0e0e0]">
+        <div class="flex justify-center pt-12 md:-mb-24 md:justify-start md:pl-12">
+          <img src="/public/img/logo.png" alt= "" width="300">
+        </div>
+
+        <div class="lg:w-[28rem] mx-auto my-auto flex flex-col justify-center pt-8 md:justify-start md:px-6 md:pt-0">
+          <p class="text-left text-3xl font-bold">Faca seu Login</p>
+          <p class="mt-2 text-left text-gray-500">Por favor forneca suas credenciais abaixo.</p>
+          <form class="flex flex-col pt-3 md:pt-8">
+            <div class="flex flex-col pt-4">
+              <div class="focus-within:border-b-gray-500 relative flex overflow-hidden border-b-2 transition">
+                <input type="email" id="login-email" class="w-full flex-1 appearance-none border-gray-300 bg-white px-4 py-2 text-base text-gray-700 placeholder-gray-400 focus:outline-none" placeholder="Email">
+              </div>
+            </div>
+            <div class="mb-12 flex flex-col pt-4">
+              <div class="focus-within:border-b-gray-500 relative flex overflow-hidden border-b-2 transition">
+                <input type="password" id="login-password" class="w-full flex-1 appearance-none border-gray-300 bg-white px-4 py-2 text-base text-gray-700 placeholder-gray-400 focus:outline-none" placeholder="Password">
+              </div>
+            </div>
+            <button type="submit" class="w-full rounded-lg bg-gray-900 px-4 py-2 text-center text-base font-semibold text-white shadow-md ring-gray-500 ring-offset-2 transition focus:ring-2">Log in</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="pointer-events-none relative hidden h-screen select-none bg-black md:block md:w-1/2">
+        <div class="absolute bottom-0 z-10 px-8 text-white opacity-100">
+          <p class="mb-8 text-4xl font-semibold leading-10">Seu carro, sua liberdade!</p>
+          <p class="">Burb</p>
+          <p class="mb-7 text-sm opacity-70">Locacao de Veiculos</p>
+        </div>
       </div>
     </div>
-  </main>
+  </section>
 {% endblock %}
