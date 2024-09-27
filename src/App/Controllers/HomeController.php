@@ -9,7 +9,7 @@ class HomeController extends Controller
     public function index($req, $res)
     {
         $res->render('home/index', [
-            'title' => 'Lalaz Framework'
+            'title' => 'Lalaz | Easy Development, Simple Deployment'
         ]);
     }
 }

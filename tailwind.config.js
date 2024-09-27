@@ -5,7 +5,11 @@ export default {
   ],
   darkMode: 'selector',
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        'purple-500': '#5e17eb'
+      }
+    },
   },
   plugins: [],
 }
