@@ -72,6 +72,48 @@ class Utils
     }
 
     /**
+     * Returns a Twig function for resolving asset paths using a manifest file.
+     *
+     * This function generates a new Twig function called "asset", which takes an asset path,
+     * looks it up in the manifest.json file, and returns the resolved path in the public/dist directory.
+     * The manifest will be reloaded whenever the manifest.json file is modified.
+     *
+     * @return \Twig\TwigFunction The Twig function to be used in templates.
+     */
+    public static function asset(): \Twig\TwigFunction
+    {
+        return new \Twig\TwigFunction('asset', function (string $path) {
+            static $manifest = null;
+            static $lastModifiedTime = null;
+
+            $manifestPath = './public/dist/manifest.json';
+
+            if (!file_exists($manifestPath)) {
+                return '';
+            }
+
+            $currentModifiedTime = filemtime($manifestPath);
+
+            if ($manifest === null || $currentModifiedTime !== $lastModifiedTime) {
+                $manifestContents = file_get_contents($manifestPath);
+                $manifest = json_decode($manifestContents, true);
+                $lastModifiedTime = $currentModifiedTime;
+
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    return '';
+                }
+            }
+
+            if (!isset($manifest[$path])) {
+                return '';
+            }
+
+            $file = $manifest[$path]['file'];
+            return "/public/dist/$file";
+        });
+    }
+
+    /**
      * Registers all Twig functions provided by this class.
      *
      * @return array An array of Twig functions including flashMessage, routeUrl, conditional, and renderIf.
@@ -79,6 +121,7 @@ class Utils
     public static function all(): array
     {
         return array(
+            static::asset(),
             static::flashMessage(),
             static::routeUrl(),
             static::conditional(),
