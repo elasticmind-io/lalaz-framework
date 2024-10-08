@@ -1,19 +1,12 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
 use Lalaz\Data\ActiveRecord;
-use Tests\Stubs\Entities\UserStub;
-use Tests\Stubs\Entities\PostStub;
+use Tests\Shared\Stubs\Entities\UserStub;
+use Tests\Shared\Stubs\Entities\PostStub;
 
-
-class SoftDeletesTest extends TestCase
-{
-    /**
-     * Test that soft delete marks the record as deleted.
-     */
-    public function testShouldSoftDeleteARecord()
-    {
-        // Arrange: Create a mock of the User class and mock the save method
+describe('SoftDeletesUnitTests', function() {
+    it('should soft delete a record', function () {
+        // Arrange
         $user = $this->getMockBuilder(UserStub::class)
             ->onlyMethods(['save'])
             ->getMock();
@@ -24,22 +17,18 @@ class SoftDeletesTest extends TestCase
             ->willReturn(true);
 
         // Ensure the 'deleted_at' property is initially null
-        $this->assertNull($user->deleted_at);
+        expect($user->deleted_at)->toBeNull();
 
-        // Act: Call the softDelete method
+        // Act
         $result = $user->softDelete();
 
-        // Assert: Ensure the soft delete was successful
-        $this->assertTrue($result);
-        $this->assertNotNull($user->deleted_at); // 'deleted_at' should now have a timestamp
-    }
+        // Assert
+        expect($result)->toBeTrue();
+        expect($user->deleted_at)->not()->toBeNull();
+    });
 
-    /**
-     * Test that a soft deleted record can be restored.
-     */
-    public function testShouldRestoreASoftDeletedRecord()
-    {
-        // Arrange: Create a mock of the User class and mock the save method
+    it('should restore a soft deleted record', function () {
+        // Arrange
         $user = $this->getMockBuilder(UserStub::class)
             ->onlyMethods(['save'])
             ->getMock();
@@ -52,36 +41,26 @@ class SoftDeletesTest extends TestCase
             ->method('save')
             ->willReturn(true);
 
-        // Act: Call the restore method
+        // Act
         $result = $user->restore();
 
-        // Assert: Ensure the record was restored
-        $this->assertTrue($result);
-        $this->assertNull($user->deleted_at); // 'deleted_at' should now be null
-    }
+        // Assert
+        expect($result)->toBeTrue();
+        expect($user->deleted_at)->toBeNull();
+    });
 
-    /**
-     * Test that soft delete throws an exception if deleted_at is not present.
-     */
-    public function testShouldNotSoftDeleteIfDeletedAtDoesNotExist()
-    {
-        // Arrange: Create a mock of a class that does not support SoftDeletes
+    it('should not soft delete if deleted_at does not exist', function () {
+        // Arrange
         $modelWithoutSoftDeletes = $this->getMockBuilder(PostStub::class)
             ->onlyMethods(['save'])
             ->getMock();
 
-        // Act & Assert: Expect an exception when softDelete is called on a model without 'deleted_at'
-        $this->expectException(\Error::class);
+        // Act & Assert
+        expect(fn () => $modelWithoutSoftDeletes->softDelete())->toThrow(\Error::class);
+    });
 
-        $modelWithoutSoftDeletes->softDelete();  // Attempt to soft delete but throw an exception
-    }
-
-    /**
-     * Test that the isDeleted method correctly detects a soft deleted record.
-     */
-    public function testShouldCheckIfARecordIsDeleted()
-    {
-        // Arrange: Create a mock of the User class
+    it('should check if a record is deleted', function () {
+        // Arrange
         $user = $this->getMockBuilder(UserStub::class)
             ->onlyMethods(['save'])
             ->getMock();
@@ -89,32 +68,28 @@ class SoftDeletesTest extends TestCase
         // Simulate the user being soft deleted
         $user->deleted_at = date('Y-m-d H:i:s');
 
-        // Act: Check if the isDeleted method returns true
+        // Act
         $isDeleted = $user->isDeleted();
 
-        // Assert: Ensure the record is marked as deleted
-        $this->assertTrue($isDeleted);
-    }
+        // Assert
+        expect($isDeleted)->toBeTrue();
+    });
 
-    /**
-     * Test that a record can be force deleted (permanently deleted).
-     */
-    public function testShouldForceDeleteARecord()
-    {
-        // Arrange: Create a mock of the User class and mock the deleteFromDatabase method
+    it('should force delete a record', function () {
+        // Arrange
         $user = $this->getMockBuilder(UserStub::class)
             ->onlyMethods(['forceDelete'])
             ->getMock();
 
-        // Define behavior for the deleteFromDatabase method
+        // Define behavior for the forceDelete method
         $user->expects($this->once())
             ->method('forceDelete')
             ->willReturn(true);
 
-        // Act: Call the forceDelete method
+        // Act
         $result = $user->forceDelete();
 
-        // Assert: Ensure the force delete was successful
-        $this->assertTrue($result);
-    }
-}
+        // Assert
+        expect($result)->toBeTrue();
+    });
+});

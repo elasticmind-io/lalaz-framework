@@ -12,18 +12,30 @@ use Lalaz\View\View;
  * This class handles the routing of HTTP requests to controllers and methods within the application.
  * It supports various HTTP methods and middleware integration, providing a flexible system for defining routes.
  *
- * @author  Elasticmind
- * @namespace Lalaz\Routing
- * @package  elasticmind\lalaz-framework
- * @link     https://lalaz.dev
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 class Router
 {
-    /** @var array $routes Stores all the registered routes */
-    protected $routes = [];
+    /** @var RouteDefinition[] $routes Stores all the registered routes */
+    protected array $routes = [];
 
-    /** @var array $middlewares Stores the global middleware to be applied on all routes */
-    protected $middlewares = [];
+    /** @var array $globalMiddlewares Stores the global middleware to be applied on all routes */
+    protected array $globalMiddlewares = [];
+
+    /** @var string|null $prefix Stores the route prefix for groups */
+    protected ?string $prefix = null;
+
+    /**
+     * Get all registered routes.
+     *
+     * @return array An array of routes with their HTTP method, URI, and action.
+     */
+    public function getRoutes(): array
+    {
+        return $this->routes;
+    }
 
     /**
      * Adds middleware to the router.
@@ -33,7 +45,7 @@ class Router
      */
     public function use($middleware): Router
     {
-        $this->middlewares[] = $middleware;
+        $this->globalMiddlewares[] = $middleware;
         return $this;
     }
 
@@ -46,7 +58,7 @@ class Router
      * @param array $middlewares An optional array of middleware classes for this route.
      * @return Router
      */
-    public function route($method, $path, $controller, $middlewares = array()): Router
+    public function route($method, $path, $controller, $middlewares = array()): RouteDefinition
     {
         [$controllerName, $function] = explode('@', $controller);
         $controllerClassName = $this->controllerLookup($controllerName);
@@ -55,9 +67,7 @@ class Router
             die("Controller ${controllerName} was not found!");
         }
 
-        $this->map($method, $path, $controllerClassName, $function, $middlewares);
-
-        return $this;
+        return $this->map($method, $path, $controllerClassName, $function, $middlewares);
     }
 
     /**
@@ -68,7 +78,7 @@ class Router
      * @param array $middlewares An optional array of middleware classes for this route.
      * @return Router
      */
-    public function get($path, $controller, $middlewares = array()): Router
+    public function get($path, $controller, $middlewares = array()): RouteDefinition
     {
         return $this->route('GET', $path, $controller, $middlewares);
     }
@@ -81,7 +91,7 @@ class Router
      * @param array $middlewares An optional array of middleware classes for this route.
      * @return Router
      */
-    public function post($path, $controller, $middlewares = array()): Router
+    public function post($path, $controller, $middlewares = array()): RouteDefinition
     {
         return $this->route('POST', $path, $controller, $middlewares);
     }
@@ -94,7 +104,7 @@ class Router
      * @param array $middlewares An optional array of middleware classes for this route.
      * @return Router
      */
-    public function put($path, $controller, $middlewares = array()): Router
+    public function put($path, $controller, $middlewares = array()): RouteDefinition
     {
         return $this->route('PUT', $path, $controller, $middlewares);
     }
@@ -107,7 +117,7 @@ class Router
      * @param array $middlewares An optional array of middleware classes for this route.
      * @return Router
      */
-    public function patch($path, $controller, $middlewares = array()): Router
+    public function patch($path, $controller, $middlewares = array()): RouteDefinition
     {
         return $this->route('PATCH', $path, $controller, $middlewares);
     }
@@ -120,9 +130,31 @@ class Router
      * @param array $middlewares An optional array of middleware classes for this route.
      * @return Router
      */
-    public function delete($path, $controller, $middlewares = array()): Router
+    public function delete($path, $controller, $middlewares = array()): RouteDefinition
     {
         return $this->route('DELETE', $path, $controller, $middlewares);
+    }
+
+    /**
+     * Creates a route group with a shared prefix.
+     *
+     * @param string $prefix The shared prefix for the routes in the group.
+     * @param callable $callback The callback function to define routes in the group.
+     * @return GroupDefinition
+     */
+    public function group(string $prefix, callable $callback): GroupDefinition
+    {
+        $previousPrefix = $this->prefix;
+        $this->prefix = rtrim(($previousPrefix ?? '') . '/' . trim($prefix, '/'), '/');
+
+        $beforeGroupRoutes = count($this->routes);
+        $callback($this);
+        $groupRoutes = array_slice($this->routes, $beforeGroupRoutes);
+
+        $groupDefinition = new GroupDefinition($groupRoutes, $this->prefix);
+        $this->prefix = $previousPrefix;
+
+        return $groupDefinition;
     }
 
     /**
@@ -166,8 +198,8 @@ class Router
         $path = $this->removeQueryString($path);
 
         $matchRouteAndMethod = function($route, $path, &$params, $method) {
-            return $this->matchPath($route['path'], $path, $params)
-                && $route['method'] === strtoupper($method);
+            return $this->matchPath($route->getPath(), $path, $params)
+                && $route->getMethod() === strtoupper($method);
         };
 
         foreach ($this->routes as $route) {
@@ -176,23 +208,27 @@ class Router
             if ($matchRouteAndMethod($route, $path, $params, $method)) {
                 $pathParams = [];
 
-                foreach ($route['params'] as $index => $paramName) {
+                foreach ($route->getParams() as $index => $paramName) {
                     $pathParams[$paramName] = $params[$index];
                 }
 
-                $middlewares = $route['middlewares'];
-                $class = $route['controller'];
-                $function = $route['function'];
+                $middlewares = array_merge($this->globalMiddlewares, $route->getMiddlewares());
+                $controller = $route->getController();
+                $function = $route->getFunction();
 
                 $req = new Request($pathParams);
                 $res = new Response();
 
-                foreach (array_merge($this->middlewares, $middlewares) as $middleware) {
-                    $handler = new $middleware();
-                    $handler->handle($req, $res);
+                foreach (array_merge($this->globalMiddlewares, $middlewares) as $middleware) {
+                    if (is_object($middleware)) {
+                        $middleware->handle($req, $res);
+                    } else {
+                        $handler = new $middleware();
+                        $handler->handle($req, $res);
+                    }
                 }
 
-                $controllerInstance = new $class;
+                $controllerInstance = new $controller;
                 $controllerInstance->callAction($function, [$req, $res]);
 
                 return;
@@ -252,22 +288,14 @@ class Router
      * @param string $controller The controller class name.
      * @param string $function The method name in the controller to call.
      * @param array $middlewares An optional array of middleware classes.
-     * @return void
+     * @return Router
      */
-    private function map($method, $path, $controller, $function, $middlewares = array()): void
+    private function map($method, $path, $controller, $function, $middlewares = []): RouteDefinition
     {
-        $path = $this->normalizePath($path);
-
-        $route = [
-            'path' => $path,
-            'method' => strtoupper($method),
-            'controller' => $controller,
-            'function' => $function,
-            'middlewares' => $middlewares,
-            'params' => $this->extractParams($path)
-        ];
-
+        $fullPath = ($this->prefix ? rtrim($this->prefix, '/') : '') . $this->normalizePath($path);
+        $route = new RouteDefinition($method, $fullPath, $controller, $function, $middlewares);
         $this->routes[] = $route;
+        return $route;
     }
 
     /**
@@ -282,18 +310,6 @@ class Router
         $path = "/{$path}";
         $path = preg_replace('#[/]{2,}#', '/', $path);
         return $path;
-    }
-
-    /**
-     * Extracts parameters from the URI path.
-     *
-     * @param string $path The URI path to extract parameters from.
-     * @return array An array of parameter names.
-     */
-    private function extractParams(string $path): array
-    {
-        preg_match_all('/\{(\w+)\}/', $path, $matches);
-        return $matches[1];
     }
 
     /**

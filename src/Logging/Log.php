@@ -11,10 +11,9 @@ use Lalaz\Lalaz;
  * It acts as a facade for accessing the current logger instance in the application and routing
  * log messages to the appropriate methods in the logger.
  *
- * @author  Elasticmind
- * @namespace Lalaz\Logging
- * @package  elasticmind\lalaz-framework
- * @link     https://elasticmind.io
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 final class Log
 {
@@ -61,6 +60,6 @@ final class Log
      */
     private static function current(): Logger
     {
-        return Lalaz::getInstance()->logger;
+        return Lalaz::logger();
     }
 }

@@ -10,9 +10,11 @@ namespace Lalaz\Data\Query;
  * the SQL query as a string. It ensures consistency and standardization in how queries
  * are constructed across different parts of the application.
  *
- * @package Lalaz\Data\Query
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
-interface IQueryBuilder
+interface QueryBuilderInterface
 {
     /**
      * Builds and returns the SQL query as a string.

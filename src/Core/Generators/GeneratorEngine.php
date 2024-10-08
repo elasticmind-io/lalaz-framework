@@ -1,6 +1,6 @@
 <?php
 
-namespace Lalaz\Generators;
+namespace Lalaz\Core\Generators;
 
 use Lalaz\IO\Directory;
 
@@ -10,21 +10,20 @@ use Lalaz\IO\Directory;
  * This class is responsible for generating various application components (controllers, models, views, etc.)
  * based on templates. It dynamically creates files and directories using a given template and output file path.
  *
- * @author  Elasticmind
- * @namespace Lalaz\Generators
- * @package  elasticmind\lalaz-framework
- * @link     https://lalaz.dev
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 class GeneratorEngine
 {
     /** @var string $templatePath The path to the template file. */
-    protected $templatePath;
+    protected string $templatePath;
 
     /** @var string $outputFilePath The path where the generated file will be saved. */
-    protected $outputFilePath;
+    protected string $outputFilePath;
 
     /** @var array $variables Variables to be replaced in the template file. */
-    protected $variables = [];
+    protected array $variables = [];
 
     /**
      * Constructor for the GeneratorEngine class.
@@ -276,6 +275,64 @@ class GeneratorEngine
     }
 
     /**
+     * Generates a event file based on the given name.
+     *
+     * @param string $name The name of the event to generate.
+     * @return void
+     */
+    public static function event($name): void
+    {
+        $parsed = self::parseNameAndNamespace($name);
+
+        $outputFilePath = './src/App/Events/'
+            . $parsed['directory'] . $parsed['className']
+            . 'Event.php';
+
+        $engine = new GeneratorEngine(
+            'event.tpl',
+            $outputFilePath
+        );
+
+        $engine->setVariables([
+            'name' => $parsed['className'],
+            'namespace' => $parsed['namespace']
+                ? 'App\\Events\\' . $parsed['namespace']
+                : 'App\\Events'
+        ]);
+
+        $engine->generate();
+    }
+
+    /**
+     * Generates a job file based on the given name.
+     *
+     * @param string $name The name of the job to generate.
+     * @return void
+     */
+    public static function job($name): void
+    {
+        $parsed = self::parseNameAndNamespace($name);
+
+        $outputFilePath = './src/App/Jobs/'
+            . $parsed['directory'] . $parsed['className']
+            . 'Job.php';
+
+        $engine = new GeneratorEngine(
+            'job.tpl',
+            $outputFilePath
+        );
+
+        $engine->setVariables([
+            'name' => $parsed['className'],
+            'namespace' => $parsed['namespace']
+                ? 'App\\Jobs\\' . $parsed['namespace']
+                : 'App\\Jobs'
+        ]);
+
+        $engine->generate();
+    }
+
+    /**
      * Generates a view file based on the given name.
      *
      * @param string $name The name of the view to generate.
@@ -297,6 +354,16 @@ class GeneratorEngine
         $engine->generate();
     }
 
+    /**
+     * Generates a seeder file based on the given name.
+     *
+     * This method creates a new seeder file using a template. The generated seeder is placed
+     * in the `src/Db/Seeders/` directory with a name based on the provided input.
+     *
+     * @param string $name The name of the seeder to generate. The name can include nested paths
+     *                     to create a structured directory for the seeder.
+     * @return void
+     */
     public static function seeder($name): void
     {
         $parsed = self::parseNameAndNamespace($name);

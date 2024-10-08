@@ -11,7 +11,9 @@ use Lalaz\Lalaz;
  * It serves as a schema builder for database migrations, allowing you to define table structures
  * and execute the necessary SQL statements to modify the database schema.
  *
- * @package Lalaz\Data\Schema
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 class SchemaBuilder
 {

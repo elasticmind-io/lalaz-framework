@@ -7,6 +7,10 @@ namespace Lalaz\Data;
  *
  * This trait allows models to be cast to a Presenter, which formats and manages data presentation.
  * It automatically maps the model's attributes to the Presenter, making them accessible.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 trait Presentable
 {

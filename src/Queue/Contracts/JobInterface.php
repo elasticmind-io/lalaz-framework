@@ -9,10 +9,9 @@ namespace Lalaz\Queue\Contracts;
  * either immediately or queued for asynchronous execution. Each job must
  * implement the handle method, which contains the logic to process the job.
  *
- * @namespace Lalaz\Queue\Contracts
- * @package  elasticmind\lalaz-framework
+ * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
- * @link     https://lalaz.dev
+ * @link    https://lalaz.dev
  */
 interface JobInterface
 {

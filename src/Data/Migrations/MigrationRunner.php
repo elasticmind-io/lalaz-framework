@@ -12,7 +12,9 @@ use Lalaz\Generators\GeneratorEngine;
  * rollback the last migration, reset all migrations, and generate new migration files.
  * It keeps track of executed migrations in a special migrations table within the database.
  *
- * @package Lalaz\Data\Migrations
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 class MigrationRunner
 {

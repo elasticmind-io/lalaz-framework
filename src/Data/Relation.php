@@ -3,7 +3,7 @@
 namespace Lalaz\Data;
 
 use Lalaz\Data\Query\Queries;
-use Lalaz\Data\Query\IQueryBuilder;
+use Lalaz\Data\Query\QueryBuilderInterface;
 use Exception;
 
 /**
@@ -11,7 +11,9 @@ use Exception;
  *
  * Manages relationships between models, such as hasMany, hasOne, belongsTo, and belongsToMany.
  *
- * @package Lalaz\Data
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 class Relation
 {
@@ -34,7 +36,7 @@ class Relation
     protected ?string $ownerKey;
 
     /** @var IQueryBuilder The query builder instance */
-    protected IQueryBuilder $query;
+    protected QueryBuilderInterface $query;
 
     /** @var string|null The pivot table name (used in belongsToMany) */
     protected ?string $pivotTable;

@@ -9,7 +9,9 @@ namespace Lalaz\Data\Query;
  * such as `SelectQueryBuilder` and `DeleteQueryBuilder`. It serves as a convenient entry point
  * for building SQL queries in a fluent and consistent manner throughout the application.
  *
- * @package Lalaz\Data\Query
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 final class Queries
 {

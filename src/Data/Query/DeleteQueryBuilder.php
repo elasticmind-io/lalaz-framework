@@ -6,14 +6,14 @@ namespace Lalaz\Data\Query;
  * Class DeleteQueryBuilder
  *
  * This class is responsible for building SQL DELETE queries in a programmatic way.
- * It implements the `IQueryBuilder` interface and provides methods to specify the table
+ * It implements the `QueryBuilderInterface` interface and provides methods to specify the table
  * and conditions for the DELETE operation.
  *
- * @package Lalaz\Data\Query
- * @author
- * @link    https://elasticmind.io
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
-class DeleteQueryBuilder implements IQueryBuilder
+class DeleteQueryBuilder implements QueryBuilderInterface
 {
     /** @var array $conditions The conditions for the WHERE clause */
     private array $conditions = [];

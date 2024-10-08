@@ -11,10 +11,9 @@ use Lalaz\Queue\QueueManager;
  * It allows events to be triggered either synchronously or asynchronously, with
  * asynchronous events being queued for later processing.
  *
-  * @author  Elasticmind
- * @namespace Lalaz\Event
- * @package  elasticmind\lalaz-framework
- * @link     https://lalaz.dev
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 class EventHub
 {
@@ -43,12 +42,12 @@ class EventHub
      * Register a listener for a specific event.
      *
      * @param string $eventName The name of the event.
-     * @param callable|Listener $listener The listener callback or class instance.
+     * @param callable|EventListener $listener The listener callback or class instance.
      * @return void
      */
-    public function register(string $eventName, callable|Listener $listener): void
+    public function register(string $eventName, callable|EventListener $listener): void
     {
-        if ($listener instanceof Listener) {
+        if ($listener instanceof EventListener) {
             $this->listeners[$eventName][] = [$listener, 'handle'];
         } else {
             $this->listeners[$eventName][] = $listener;
@@ -93,6 +92,22 @@ class EventHub
         }
     }
 
+    /**
+     * Checks if an event has registered listeners.
+     *
+     * @param string $eventName The name of the event to check.
+     * @return bool True if listeners are registered, false otherwise.
+     */
+    public function hasListeners(string $eventName): bool
+    {
+        return !empty($this->listeners[$eventName]);
+    }
+
+    /**
+     * Emit the initialization event to allow customization.
+     *
+     * @return void
+     */
     private function emitInitializationEvent(): void
     {
         if (function_exists('onEventHubInitialized')) {

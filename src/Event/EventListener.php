@@ -8,10 +8,9 @@ namespace Lalaz\Event;
  * A base class for all event listeners. Provides a standard method
  * signature for handling events.
  *
- * @author  Elasticmind
- * @namespace Lalaz\Event
- * @package  elasticmind\lalaz-framework
- * @link     https://lalaz.dev
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 abstract class EventListener
 {

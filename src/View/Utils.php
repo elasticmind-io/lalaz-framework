@@ -6,6 +6,7 @@ use Lalaz\Lalaz;
 use Lalaz\Http\FlashMessage;
 use Twig\Loader\FilesystemLoader;
 use Twig\Environment;
+use Twig\TwigFunction;
 
 /**
  * Class Utils
@@ -14,10 +15,9 @@ use Twig\Environment;
  * It includes functions for handling flash messages, generating route URLs, and
  * conditional rendering logic within Twig templates.
  *
+ * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
- * @namespace Lalaz\View
- * @package  elasticmind\lalaz-framework
- * @link     https://elasticmind.io
+ * @link    https://lalaz.dev
  */
 class Utils
 {
@@ -28,9 +28,9 @@ class Utils
      *
      * @return \Twig\TwigFunction A Twig function 'showFlashMessage' that displays a flash message.
      */
-    public static function flashMessage(): \Twig\TwigFunction
+    public static function flashMessage(): TwigFunction
     {
-        return new \Twig\TwigFunction('showFlashMessage', function(string $name) {
+        return new TwigFunction('showFlashMessage', function(string $name) {
             return self::showFlashMessage($name);
         });
     }
@@ -40,9 +40,9 @@ class Utils
      *
      * @return \Twig\TwigFunction A Twig function 'routeUrl' that returns the route URL.
      */
-    public static function routeUrl(): \Twig\TwigFunction
+    public static function routeUrl(): TwigFunction
     {
-        return new \Twig\TwigFunction('routeUrl', function(string $action) {
+        return new TwigFunction('routeUrl', function(string $action) {
             return $action;
         });
     }
@@ -52,9 +52,9 @@ class Utils
      *
      * @return \Twig\TwigFunction A Twig function 'conditional' that returns a value based on a condition.
      */
-    public static function conditional(): \Twig\TwigFunction
+    public static function conditional(): TwigFunction
     {
-        return new \Twig\TwigFunction('conditional', function(bool $condition, string $left, string $right) {
+        return new TwigFunction('conditional', function(bool $condition, string $left, string $right) {
             return $condition ? $left : $right;
         });
     }
@@ -64,9 +64,9 @@ class Utils
      *
      * @return \Twig\TwigFunction A Twig function 'renderIf' that renders a value if a condition is true.
      */
-    public static function renderIf(): \Twig\TwigFunction
+    public static function renderIf(): TwigFunction
     {
-        return new \Twig\TwigFunction('renderIf', function(string $left, bool $condition) {
+        return new TwigFunction('renderIf', function(string $left, bool $condition) {
             return $condition ? $left : null;
         });
     }
@@ -80,9 +80,9 @@ class Utils
      *
      * @return \Twig\TwigFunction The Twig function to be used in templates.
      */
-    public static function asset(): \Twig\TwigFunction
+    public static function asset(): TwigFunction
     {
-        return new \Twig\TwigFunction('asset', function (string $path) {
+        return new TwigFunction('asset', function (string $path) {
             static $manifest = null;
             static $lastModifiedTime = null;
 

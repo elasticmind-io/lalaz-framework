@@ -8,24 +8,25 @@ namespace Lalaz\Logging;
  * This class implements the ILoggerWriter interface to output log messages to the console.
  * It writes messages directly to the standard input stream (stdin).
  *
- * @author  Elasticmind
- * @namespace Lalaz\Logging
- * @package  elasticmind\lalaz-framework
- * @link     https://elasticmind.io
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
-final class LogToConsole implements ILoggerWriter
+final class LogToConsole implements LoggerWriterInterface
 {
     /**
-     * Writes a log message to the console.
+     * Writes a message to the console.
      *
-     * @param string $message The log message to output.
-     *
+     * @param string $message The message to log to the console.
      * @return void
      */
     public function write(string $message): void
     {
-        $out = fopen('php://stdin', 'w');
-        fputs($out, "$message\n");
-        fclose($out);
+        $stream = fopen('php://stdout', 'w');
+
+        if ($stream && is_resource($stream)) {
+            fputs($stream, $message . PHP_EOL);
+            fclose($stream);
+        }
     }
 }

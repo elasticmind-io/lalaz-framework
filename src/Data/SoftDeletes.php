@@ -2,6 +2,8 @@
 
 namespace Lalaz\Data;
 
+use \Exception;
+
 /**
  * Trait SoftDeletes
  *
@@ -9,6 +11,10 @@ namespace Lalaz\Data;
  * from the database, the `deleted_at` column is used to mark the record as deleted, allowing
  * it to be restored later. The trait also provides methods for performing permanent deletions
  * (hard delete) and checking if a model has been soft deleted.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 trait SoftDeletes
 {
@@ -17,7 +23,7 @@ trait SoftDeletes
      *
      * @var string|null
      */
-    public $deleted_at;
+    protected $deleted_at;
 
     /**
      * Marks the model as deleted by setting the `deleted_at` timestamp.
@@ -28,12 +34,13 @@ trait SoftDeletes
      */
     public function softDelete()
     {
-        if (property_exists($this, 'deleted_at')) {
+        if (property_exists($this, 'deleted_at')) {;
             $this->deleted_at = date('Y-m-d H:i:s');
+            $this->dirty['deleted_at'] = date('Y-m-d H:i:s');
             return $this->save();
         }
 
-        throw new \Exception('The model does not support soft delete.');
+        throw new Exception('The model does not support soft delete.');
     }
 
     /**
@@ -47,10 +54,11 @@ trait SoftDeletes
     {
         if (property_exists($this, 'deleted_at')) {
             $this->deleted_at = null;
+            $this->dirty['deleted_at'] = null;
             return $this->save();
         }
 
-        throw new \Exception('The model does not support soft delete.');
+        throw new Exception('The model does not support soft delete.');
     }
 
     /**

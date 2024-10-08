@@ -12,10 +12,9 @@ namespace Lalaz\Http;
  * Middleware typically performs tasks such as authentication, logging, or modifying
  * requests before they reach the controller.
  *
- * @author  Elasticmind
- * @namespace Lalaz\Http
- * @package  elasticmind\lalaz-framework
- * @link     https://elasticmind.io
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 abstract class Middleware
 {

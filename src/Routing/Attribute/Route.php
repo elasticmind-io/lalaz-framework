@@ -11,10 +11,9 @@ use Attribute;
  * It defines the HTTP method and the path for a given route. The attribute allows
  * routes to be defined directly on controller methods, supporting route-based annotations.
  *
- * @author  Elasticmind
- * @namespace Lalaz\Routing\Attribute
- * @package  elasticmind\lalaz-framework
- * @link     https://lalaz.dev
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 #[Attribute]
 class Route

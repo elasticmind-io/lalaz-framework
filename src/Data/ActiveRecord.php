@@ -2,14 +2,16 @@
 
 namespace Lalaz\Data;
 
+use \Exception;
+use \PDO;
+use \PDOStatement;
+use \PDOException;
 use Lalaz\Lalaz;
 use Lalaz\Data\Query\Queries;
 use Lalaz\Data\Query\Expr;
 use Lalaz\Data\Query\Expressions;
-use Lalaz\Data\Query\IQueryBuilder;
+use Lalaz\Data\Query\QueryBuilderInterface;
 use Lalaz\Data\DatabaseException;
-use Exception;
-use PDO;
 
 /**
  * Class ActiveRecord
@@ -18,7 +20,9 @@ use PDO;
  * It includes methods for creating, updating, deleting, and querying records from the database using the query builder.
  * Models extending this class should implement the `tableName()` method to specify the associated database table.
  *
- * @package Lalaz\Data
+ * @package  elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link     https://lalaz.dev
  */
 abstract class ActiveRecord extends Model
 {
@@ -242,8 +246,8 @@ abstract class ActiveRecord extends Model
             $this->dirty = [];
             $this->afterCreate();
             return true;
-        } catch (\PDOException $e) {
-            throw new \Exception('Error inserting record: ' . $e->getMessage(), 0, $e);
+        } catch (PDOException $e) {
+            throw new Exception('Error inserting record: ' . $e->getMessage(), 0, $e);
         }
     }
 
@@ -262,7 +266,6 @@ abstract class ActiveRecord extends Model
         $this->beforeUpdate();
 
         if (!$this->isDirty()) {
-            die('update)');
             return true;
         }
 
@@ -568,11 +571,11 @@ abstract class ActiveRecord extends Model
     /**
      * Bind primary key values to a prepared statement.
      *
-     * @param \PDOStatement $statement
+     * @param PDOStatement $statement
      * @param string|array $primaryKey
      * @return void
      */
-    protected function bindPrimaryKeyValues(\PDOStatement $statement, $primaryKey): void
+    protected function bindPrimaryKeyValues(PDOStatement $statement, $primaryKey): void
     {
         if (is_array($primaryKey)) {
             foreach ($primaryKey as $key) {
@@ -638,9 +641,9 @@ abstract class ActiveRecord extends Model
      * Prepare a SQL statement.
      *
      * @param string $sql
-     * @return \PDOStatement
+     * @return PDOStatement
      */
-    protected static function prepare(string $sql): \PDOStatement
+    protected static function prepare(string $sql): PDOStatement
     {
         return Lalaz::getInstance()->db->prepare($sql);
     }
@@ -650,9 +653,9 @@ abstract class ActiveRecord extends Model
      *
      * @param string $sql
      * @param array $parameters
-     * @return \PDOStatement
+     * @return PDOStatement
      */
-    protected static function prepareAndBindParameters(string $sql, array $parameters = []): \PDOStatement
+    protected static function prepareAndBindParameters(string $sql, array $parameters = []): PDOStatement
     {
         $statement = static::prepare($sql);
         static::bindParameters($statement, $parameters);
@@ -662,11 +665,11 @@ abstract class ActiveRecord extends Model
     /**
      * Bind parameters to a prepared statement.
      *
-     * @param \PDOStatement $statement
+     * @param PDOStatement $statement
      * @param array $parameters
      * @return void
      */
-    protected static function bindParameters(\PDOStatement $statement, array $parameters = []): void
+    protected static function bindParameters(PDOStatement $statement, array $parameters = []): void
     {
         foreach ($parameters as $key => $value) {
             $statement->bindValue(":$key", $value);
@@ -676,12 +679,12 @@ abstract class ActiveRecord extends Model
     /**
      * Execute a query and fetch a single record.
      *
-     * @param IQueryBuilder $builder
+     * @param QueryBuilderInterface $builder
      * @param array $parameters
      * @return static|null
      * @throws Exception
      */
-    protected static function queryOne(IQueryBuilder $builder, array $parameters = [])
+    protected static function queryOne(QueryBuilderInterface $builder, array $parameters = [])
     {
         $sql = $builder->build();
 
@@ -709,12 +712,12 @@ abstract class ActiveRecord extends Model
     /**
      * Execute a query and fetch all records.
      *
-     * @param IQueryBuilder $builder
+     * @param QueryBuilderInterface $builder
      * @param array $parameters
      * @return array
      * @throws Exception
      */
-    protected static function queryAll(IQueryBuilder $builder, array $parameters = []): array
+    protected static function queryAll(QueryBuilderInterface $builder, array $parameters = []): array
     {
         $sql = $builder->build();
 
@@ -743,10 +746,10 @@ abstract class ActiveRecord extends Model
     /**
      * Apply soft delete constraint to the query.
      *
-     * @param IQueryBuilder $query
-     * @return IQueryBuilder
+     * @param QueryBuilderInterface $query
+     * @return QueryBuilderInterface
      */
-    protected static function applySoftDeleteConstraint(IQueryBuilder $query): IQueryBuilder
+    protected static function applySoftDeleteConstraint(QueryBuilderInterface $query): QueryBuilderInterface
     {
         $instance = new static();
         if ($instance->usesSoftDeletes()) {
@@ -861,11 +864,11 @@ abstract class ActiveRecord extends Model
     /**
      * Apply ORDER BY clauses to the query builder.
      *
-     * @param IQueryBuilder $query
+     * @param QueryBuilderInterface $query
      * @param array $orderBy
-     * @return IQueryBuilder
+     * @return QueryBuilderInterface
      */
-    protected static function applyOrderBy(IQueryBuilder $query, array $orderBy): IQueryBuilder
+    protected static function applyOrderBy(QueryBuilderInterface $query, array $orderBy): QueryBuilderInterface
     {
         foreach ($orderBy as $column => $direction) {
             $query->orderBy($column, $direction);
@@ -887,7 +890,8 @@ abstract class ActiveRecord extends Model
     {
         $tableName = static::tableName();
 
-        $query = Queries::select('*')->from($tableName)
+        $query = Queries::select('*')
+            ->from($tableName)
             ->where($expr->expression());
 
         $query = static::applySoftDeleteConstraint($query);

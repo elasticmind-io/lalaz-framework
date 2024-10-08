@@ -11,10 +11,9 @@ use PDO;
  * such as preparing statements, executing queries, and handling exceptions. It encapsulates the PDO instance
  * and offers convenient methods for common database operations.
  *
- * @author  Elasticmind
- * @namespace Lalaz\Data
- * @package  elasticmind\lalaz-framework
- * @link     https://elasticmind.io
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 class Database
 {

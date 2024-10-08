@@ -8,10 +8,9 @@ namespace Lalaz\Security;
  * This trait provides methods for generating and verifying password hashes
  * using the Argon2ID algorithm, with an additional static salt for added security.
  *
+ * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
- * @namespace Lalaz\Security
- * @package  elasticmind\lalaz-framework
- * @link     https://elasticmind.io
+ * @link    https://lalaz.dev
  */
 class Hashing
 {

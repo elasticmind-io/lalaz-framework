@@ -13,10 +13,9 @@ use PDO;
  * It implements the QueueProviderInterface, allowing jobs to be added to
  * the database and processed asynchronously.
  *
- * @namespace Lalaz\Queue\Providers
- * @package  elasticmind\lalaz-framework
+ * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
- * @link     https://lalaz.dev
+ * @link    https://lalaz.dev
  */
 class DatabaseQueueProvider implements QueueProviderInterface
 {

@@ -3,17 +3,16 @@
 namespace Lalaz\Logging;
 
 /**
- * Interface ILoggerWriter
+ * Interface LoggerWriterInterface
  *
  * This interface defines a contract for writing log messages.
  * Any class implementing this interface must provide a `write()` method to handle log output.
  *
- * @author  Elasticmind
- * @namespace Lalaz\Logging
- * @package  elasticmind\lalaz-framework
- * @link     https://elasticmind.io
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
-interface ILoggerWriter
+interface LoggerWriterInterface
 {
     /**
      * Writes a log message.

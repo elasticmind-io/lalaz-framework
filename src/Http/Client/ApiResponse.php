@@ -7,6 +7,10 @@ namespace Lalaz\Http\Client;
  *
  * This class represents the response from an API request.
  * It contains the HTTP status code, the response body, and a success flag.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 class ApiResponse
 {

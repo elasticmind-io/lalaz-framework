@@ -11,10 +11,9 @@ use Lalaz\Queue\Job;
  * Represents a queued event that will be processed asynchronously.
  * When executed, it triggers the original event and all its listeners.
  *
-  * @author  Elasticmind
- * @namespace Lalaz\Event
- * @package  elasticmind\lalaz-framework
- * @link     https://lalaz.dev
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 class EventJob extends Job
 {

@@ -2,6 +2,8 @@
 
 namespace Lalaz\Http;
 
+use Lalaz\Lalaz;
+
 /**
  * Class Controller
  *
@@ -9,10 +11,9 @@ namespace Lalaz\Http;
  * It includes a method to dynamically execute actions on the controller with the provided
  * method name and parameters.
  *
- * @author  Elasticmind
- * @namespace Lalaz\Http
- * @package  elasticmind\lalaz-framework
- * @link     https://elasticmind.io
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 abstract class Controller
 {
@@ -30,5 +31,17 @@ abstract class Controller
     public function callAction($method, $parameters): void
     {
         $this->{$method}(...array_values($parameters));
+    }
+
+    /**
+     * Get the logger instance for the application.
+     *
+     * Provides a logging interface to be used within controllers.
+     *
+     * @return mixed The logger instance.
+     */
+    protected static function logger()
+    {
+        return Lalaz::logger();
     }
 }

@@ -11,10 +11,9 @@ use Lalaz\Lalaz;
  * Lalaz framework. Utilizes the EventHub for event management, allowing events
  * to be registered with listeners and triggered either asynchronously or synchronously.
  *
- * @author  Elasticmind
- * @namespace Lalaz\Event
- * @package  elasticmind\lalaz-framework
- * @link     https://lalaz.dev
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 class Events
 {

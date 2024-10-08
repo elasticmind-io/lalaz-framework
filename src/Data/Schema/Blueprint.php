@@ -9,7 +9,9 @@ namespace Lalaz\Data\Schema;
  * It allows you to specify columns, their data types, indexes, foreign keys,
  * and other constraints for creating or modifying tables in a database schema migration.
  *
- * @package Lalaz\Data\Schema
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 class Blueprint
 {

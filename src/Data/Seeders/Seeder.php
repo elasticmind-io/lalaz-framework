@@ -8,6 +8,10 @@ use Lalaz\Data\Database;
  * Class Seeder
  *
  * Base class for creating database seeders.
+ *
+ * @package  elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link     https://lalaz.dev
  */
 abstract class Seeder implements SeederInterface
 {

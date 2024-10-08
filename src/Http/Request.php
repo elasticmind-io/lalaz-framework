@@ -9,10 +9,9 @@ namespace Lalaz\Http;
  * request parameters, body data, session, and cookies. It also handles
  * CSRF token validation for specific HTTP methods.
  *
- * @author  Elasticmind
- * @namespace Lalaz\Http
- * @package  elasticmind\lalaz-framework
- * @link     https://elasticmind.io
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 class Request
 {
@@ -146,6 +145,43 @@ class Request
         if ($this->body()['csrfToken'] !== $this->session('csrfToken')) {
             die('Request token is not valid!');
         }
+    }
+
+    /**
+     * Retrieve an uploaded file from the request.
+     *
+     * @param string $key The input name of the file.
+     * @return UploadedFile|null Returns an instance of UploadedFile or null if not found.
+     */
+    public function file(string $key): ?UploadedFile
+    {
+        if (!isset($_FILES[$key])) {
+            return null;
+        }
+
+        if ($_FILES[$key]['error'] !== UPLOAD_ERR_OK) {
+            echo "Erro no upload: " . $_FILES[$key]['error'];
+        }
+
+        return new UploadedFile($_FILES[$key]);
+    }
+
+    /**
+     * Check if the request expects a JSON response.
+     *
+     * @return bool True if the request expects JSON, otherwise false.
+     */
+    public static function isJsonRequest(): bool
+    {
+        if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
+            return true;
+        }
+
+        if (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace Lalaz\Security;
 
+use Lalaz\Http\SessionManager;
 use Lalaz\Data\Query\Expressions;
 
 /**
@@ -12,14 +13,15 @@ use Lalaz\Data\Query\Expressions;
  * that uses this trait to define those properties. It also includes
  * password verification logic using the PasswordHash trait.
  *
+ * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
- * @namespace Lalaz\Security
- * @package  elasticmind\lalaz-framework
- * @link     https://elasticmind.io
+ * @link    https://lalaz.dev
  */
 trait Authenticable
 {
     use PasswordHash;
+
+    private static string $userSessionKey = '__luser';
 
     /**
      * Gets the name of the property that stores the username.
@@ -29,7 +31,7 @@ trait Authenticable
      *
      * @return string The property name for the username.
      */
-    abstract private static function usernamePropertyName(): string;
+    abstract protected static function usernamePropertyName(): string;
 
     /**
      * Gets the name of the property that stores the password.
@@ -39,7 +41,7 @@ trait Authenticable
      *
      * @return string The property name for the password.
      */
-    abstract private static function passwordPropertyName(): string;
+    abstract protected static function passwordPropertyName(): string;
 
     /**
      * Authenticates a user based on the provided username and password.
@@ -60,12 +62,38 @@ trait Authenticable
         $filter = Expressions::create()->eq($usernamePropertyName, $username);
         $user = self::findOneByExpression($filter);
 
-        if (!$user) return false;
+        if (!$user) {
+            return false;
+        }
 
         $isValidPassword = self::verifyHash($password, $user->{$passwordPropertyName});
 
-        if (!$isValidPassword) return false;
+        if (!$isValidPassword) {
+            return false;
+        }
+
+        SessionManager::set(static::$userSessionKey, $user);
 
         return $user;
+    }
+
+    /**
+     * Logs out the user by clearing the session.
+     *
+     * @return void
+     */
+    public static function logout(): void
+    {
+        SessionManager::destroy();
+    }
+
+    /**
+     * Retrieves the authenticated user from the session.
+     *
+     * @return mixed|null Returns the user object if authenticated, null otherwise.
+     */
+    public static function authenticatedUser(): mixed
+    {
+        return SessionManager::get(static::$userSessionKey);
     }
 }

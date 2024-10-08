@@ -11,10 +11,9 @@ use Lalaz\Queue\Contracts\JobInterface;
  * It includes methods for executing the job immediately (synchronously)
  * or queuing the job for later execution (asynchronously).
  *
- * @namespace Lalaz\Queue
- * @package  elasticmind\lalaz-framework
+ * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
- * @link     https://lalaz.dev
+ * @link    https://lalaz.dev
  */
 abstract class Job implements JobInterface
 {

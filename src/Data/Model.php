@@ -13,10 +13,9 @@ use Lalaz\Lalaz;
  *
  * Subclasses should implement the `validates()` method to specify validation rules for their attributes.
  *
- * @author  Elasticmind
- * @namespace Lalaz\Data
- * @package  elasticmind\lalaz-framework
- * @link     https://elasticmind.io
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 abstract class Model
 {

@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Lalaz\Config;
+namespace Lalaz\Core;
 
 /**
  * Class Config
@@ -12,10 +12,9 @@ namespace Lalaz\Config;
  * Supports different delimiters, ignores comments, provides type casting for variables,
  * allows setting default values, and validates the loaded variables.
  *
- * @namespace Lalaz\Config
- * @package  elasticmind\lalaz-framework
+ * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
- * @link     https://lalaz.dev
+ * @link    https://lalaz.dev
  */
 class Config
 {
@@ -108,7 +107,7 @@ class Config
      */
     public static function get(string $key, mixed $default = null): mixed
     {
-        return self::$env[$key] ?? $default;
+        return self::$env[$key] ?? $_ENV[$key] ?? $default;
     }
 
     /**
@@ -127,9 +126,9 @@ class Config
         $value = self::get($key, $default);
 
         return match ($type) {
-            'int' => (int) $value,
-            'bool' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
-            'float' => (float) $value,
+            'int' => is_numeric($value) ? (int) $value : $default,
+            'bool' => filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? $default,
+            'float' => is_numeric($value) ? (float) $value : $default,
             default => (string) $value,
         };
     }
@@ -146,7 +145,8 @@ class Config
      */
     public static function validate(string $key, callable $validator): bool
     {
-        return isset(self::$env[$key]) && $validator(self::$env[$key]);
+        $value = self::get($key);
+        return isset($value) && $validator($value);
     }
 
     /**
@@ -173,6 +173,48 @@ class Config
      */
     public static function all(): array
     {
-        return self::$env ?? [];
+        return array_merge(self::$env ?? [], $_ENV);
+    }
+
+    /**
+     * Checks if the current environment matches the specified value.
+     *
+     * @param string $env The environment to compare with.
+     * @return bool True if it matches, false otherwise.
+     */
+    public static function isEnv(string $env): bool
+    {
+        $currentEnv = Config::get('ENV', 'development');
+        return strcasecmp($currentEnv, $env) === 0;
+    }
+
+    /**
+     * Checks if the current environment is set to 'debug'.
+     *
+     * @return bool True if the environment is 'debug', false otherwise.
+     */
+    public static function isDebug()
+    {
+        return self::isEnv('debug');
+    }
+
+    /**
+     * Checks if the current environment is set to 'development'.
+     *
+     * @return bool True if the environment is 'development', false otherwise.
+     */
+    public static function isDevelopment()
+    {
+        return self::isEnv('development');
+    }
+
+    /**
+     * Checks if the current environment is set to 'production'.
+     *
+     * @return bool True if the environment is 'production', false otherwise.
+     */
+    public static function isProduction(): bool
+    {
+        return self::isEnv('production');
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Lalaz\Queue;
 
+use Lalaz\Core\Config;
 use Throwable;
 
 /**
@@ -10,10 +11,9 @@ use Throwable;
  * This class acts as an entry point to execute queued jobs within the application.
  * It provides a method to run all pending jobs by utilizing the JobRunner class.
  *
- * @namespace Lalaz\Queue
- * @package  elasticmind\lalaz-framework
+ * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
- * @link     https://lalaz.dev
+ * @link    https://lalaz.dev
  */
 class Jobs
 {
@@ -29,6 +29,7 @@ class Jobs
     public static function run(): void
     {
         try {
+            Config::load('src/App/.env');
             echo "Starting job execution...\n";
             $jobRunner = new JobRunner();
             $jobRunner->run();

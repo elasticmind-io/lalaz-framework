@@ -11,7 +11,9 @@ namespace Lalaz\Data\Migrations;
  * such as creating tables or adding columns, while the `down()` method should reverse these changes,
  * allowing for rollback functionality.
  *
- * @package Lalaz\Data\Migrations
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 abstract class Migration
 {

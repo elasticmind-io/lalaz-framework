@@ -11,10 +11,9 @@ use Lalaz\View\View;
  * cookies, headers, redirects, rendering views, sending JSON responses, and handling flash messages.
  * It is used to build and send HTTP responses back to the client.
  *
- * @author  Elasticmind
- * @namespace Lalaz\Http
- * @package  elasticmind\lalaz-framework
- * @link     https://elasticmind.io
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 class Response
 {
@@ -170,7 +169,7 @@ class Response
      * @param array $params The parameters to pass to the view.
      * @return void
      */
-    public function render(string $view, $params = []): void
+    public function render(string $view, $params = [], $statusCode = 200): void
     {
         $csrfToken = static::generateCsrfToken();
         $this->addSession('csrfToken', $csrfToken);
@@ -181,8 +180,8 @@ class Response
             'csrfToken' => $csrfToken
         ];
 
+        http_response_code($statusCode);
         View::render($view, $data);
-        exit();
     }
 
     /**
@@ -197,7 +196,6 @@ class Response
         header('Content-Type: application/json');
         http_response_code($statusCode);
         echo json_encode($data);
-        exit();
     }
 
     /**

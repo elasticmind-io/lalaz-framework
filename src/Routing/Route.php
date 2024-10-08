@@ -11,10 +11,9 @@ use Lalaz\Lalaz;
  * It interacts with the application's main router instance to register HTTP
  * methods (GET, POST, PUT, PATCH, DELETE) and middleware.
  *
- * @author  Elasticmind
- * @namespace Lalaz\Routing
- * @package  elasticmind\lalaz-framework
- * @link     https://lalaz.dev
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 final class Route
 {
@@ -27,9 +26,10 @@ final class Route
      *
      * @return void
      */
-    public static function get($path, $controller, $middlewares = array()): void
+    public static function get($path, $controller, $middlewares = array()): RouteDefinition
     {
-        Lalaz::getInstance()->router->get($path, $controller, $middlewares);
+        return Lalaz::router()
+            ->get($path, $controller, $middlewares);
     }
 
     /**
@@ -41,9 +41,10 @@ final class Route
      *
      * @return void
      */
-    public static function post($path, $controller, $middlewares = array()): void
+    public static function post($path, $controller, $middlewares = array()): RouteDefinition
     {
-        Lalaz::getInstance()->router->post($path, $controller, $middlewares);
+        return Lalaz::router()
+            ->post($path, $controller, $middlewares);
     }
 
     /**
@@ -55,9 +56,10 @@ final class Route
      *
      * @return void
      */
-    public static function put($path, $controller, $middlewares = array()): void
+    public static function put($path, $controller, $middlewares = array()): RouteDefinition
     {
-        Lalaz::getInstance()->router->put($path, $controller, $middlewares);
+        return Lalaz::router()
+            ->put($path, $controller, $middlewares);
     }
 
     /**
@@ -69,9 +71,10 @@ final class Route
      *
      * @return void
      */
-    public static function patch($path, $controller, $middlewares = array()): void
+    public static function patch($path, $controller, $middlewares = array()): RouteDefinition
     {
-        Lalaz::getInstance()->router->patch($path, $controller, $middlewares);
+        return Lalaz::router()
+            ->patch($path, $controller, $middlewares);
     }
 
     /**
@@ -83,9 +86,16 @@ final class Route
      *
      * @return void
      */
-    public static function delete($path, $controller, $middlewares = array()): void
+    public static function delete($path, $controller, $middlewares = array()): RouteDefinition
     {
-        Lalaz::getInstance()->router->delete($path, $controller, $middlewares);
+        return Lalaz::router()
+            ->delete($path, $controller, $middlewares);
+    }
+
+    public static function group(string $prefix, callable $callback): GroupDefinition
+    {
+        return Lalaz::router()
+            ->group($prefix, $callback);
     }
 
     /**
@@ -95,8 +105,9 @@ final class Route
      *
      * @return void
      */
-    public static function use($middleware): void
+    public static function use($middleware): Router
     {
-        Lalaz::getInstance()->router->use($middleware);
+        return Lalaz::router()
+            ->use($middleware);
     }
 }

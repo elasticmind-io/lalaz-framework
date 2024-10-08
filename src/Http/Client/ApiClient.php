@@ -7,6 +7,10 @@ namespace Lalaz\Http\Client;
  *
  * This class provides functionality to make RESTful HTTP requests
  * and returns an ApiResponse that contains the status code and body of the request.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 class ApiClient
 {

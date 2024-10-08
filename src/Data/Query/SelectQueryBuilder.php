@@ -6,12 +6,14 @@ namespace Lalaz\Data\Query;
  * Class SelectQueryBuilder
  *
  * This class is responsible for building SQL SELECT queries in a programmatic and fluent way.
- * It implements the `IQueryBuilder` interface and provides methods to specify the SELECT fields,
+ * It implements the `QueryBuilderInterface` interface and provides methods to specify the SELECT fields,
  * tables, conditions, joins, ordering, grouping, and other SQL clauses.
  *
- * @package Lalaz\Data\Query
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
-class SelectQueryBuilder implements IQueryBuilder
+class SelectQueryBuilder implements QueryBuilderInterface
 {
     /** @var array $fields The fields to select in the query */
     private array $fields = [];

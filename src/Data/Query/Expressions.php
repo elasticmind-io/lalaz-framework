@@ -8,7 +8,9 @@ namespace Lalaz\Data\Query;
  * This final class provides a factory method to create instances of the `Expr` class.
  * It serves as a utility to simplify the creation of expression objects used for building SQL queries.
  *
- * @package Lalaz\Data\Query
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 final class Expressions
 {

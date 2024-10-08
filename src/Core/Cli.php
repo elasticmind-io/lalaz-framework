@@ -1,12 +1,13 @@
 <?php declare(strict_types=1);
 
-namespace Lalaz;
+namespace Lalaz\Core;
 
 use Lalaz\Lalaz;
-use Lalaz\Generators\GeneratorEngine;
+use Lalaz\Core\Generators\GeneratorEngine;
 use Lalaz\Data\Migrations\MigrationRunner;
 use Lalaz\Data\Seeders\SeederRunner;
 use Lalaz\Queue\Jobs;
+use Lalaz\Security\Hashing;
 
 /**
  * Class Cli
@@ -18,10 +19,9 @@ use Lalaz\Queue\Jobs;
  * Each command can be accessed by passing arguments through the CLI,
  * and the appropriate method will be executed based on the command provided.
  *
- * @namespace Lalaz
- * @package  elasticmind\lalaz-framework
+ * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
- * @link     https://lalaz.dev
+ * @link    https://lalaz.dev
  */
 class Cli
 {
@@ -37,7 +37,6 @@ class Cli
      */
     public static function command(array $args): void
     {
-        // Extract the main command and name argument
         $command = $args[1] ?? 'help';
         $name = $args[2] ?? '';
 
@@ -77,6 +76,16 @@ class Cli
                 echo "Seeder {$name} created successfully!\n";
                 break;
 
+            case 'g:event':
+                GeneratorEngine::event($name);
+                echo "Event {$name} created successfully!\n";
+                break;
+
+            case 'g:job':
+                GeneratorEngine::job($name);
+                echo "Job {$name} created successfully!\n";
+                break;
+
             case 'g:view':
                 GeneratorEngine::view($name);
                 echo "View {$name} created successfully!\n";
@@ -104,6 +113,12 @@ class Cli
                 echo "Seeder {$seedName} executed successfully!\n";
                 break;
 
+            case 'seed:all':
+                $runner = new SeederRunner(Lalaz::db());
+                $runner->runSeeders();
+                echo "Seeders executed successfully!\n";
+                break;
+
             case 'jobs:once':
                 Jobs::run();
                 echo "Jobs executed successfully!\n";
@@ -117,6 +132,14 @@ class Cli
                 }
                 break;
 
+            case 'hash:password':
+                echo Hashing::generateHash($name) . "\n";
+                break;
+
+            case 'routes':
+                static::routes();
+                break;
+
             case 'serve':
                 $port = $args[2] ?? '8080';
                 $phpServerCmd = "php -S localhost:$port";
@@ -127,7 +150,7 @@ class Cli
                 break;
 
             case 'test':
-                passthru('vendor/bin/phpunit');
+                passthru('./vendor/bin/pest');
                 echo "Tests executed successfully!\n";
                 break;
 
@@ -165,8 +188,56 @@ class Cli
         echo "  seed [name]             - Run a database seeder\n";
         echo "  jobs:once               - Run the job queue once\n";
         echo "  jobs:run                - Run the job queue continuously\n";
+        echo "  routes                  - Display all registered routes\n";
         echo "  serve [port]            - Serve the application with Vite and PHP\n";
         echo "  test                    - Run PHPUnit tests\n";
         echo "  help                    - Display this help message\n";
+    }
+
+    /**
+     * Display all registered routes in the system in a tabular format.
+     *
+     * @return void
+     */
+    private static function routes(): void
+    {
+        $router = Lalaz::getInstance()->router;
+        $routes = $router->getRoutes();
+
+        // Calculate column widths based on the longest content in each column
+        $methodWidth = max(array_map(fn($route) => strlen($route->getMethod()), $routes));
+        $pathWidth = max(array_map(fn($route) => strlen($route->getPath()), $routes));
+        $controllerWidth = max(array_map(fn($route) => strlen($route->getController() . '#' . $route->getFunction()), $routes));
+        $middlewaresWidth = max(array_map(fn($route) => strlen(empty($route->getMiddlewares()) ? 'None' : implode(',', $route->getMiddlewares())), $routes));
+
+        echo "\n";
+
+        // Adjust column widths to fit the headers
+        $methodWidth = max($methodWidth, strlen('METHOD')) + 2;
+        $pathWidth = max($pathWidth, strlen('URI')) + 2;
+        $controllerWidth = max($controllerWidth, strlen('CONTROLLER#ACTION')) + 2;
+        $middlewaresWidth = max($middlewaresWidth, strlen('MIDDLEWARES')) + 2;
+
+        // Print table headers
+        printf(
+            "| %-{$methodWidth}s | %-{$pathWidth}s | %-{$controllerWidth}s | %-{$middlewaresWidth}s |\n",
+            'Method', 'Path', 'Controller#action', 'Middlewares'
+        );
+
+        $separatorWidth = $methodWidth + $pathWidth + $controllerWidth + $middlewaresWidth + 13;
+        echo str_repeat('-', $separatorWidth) . "\n";
+
+        // Print each route as a table row
+        foreach ($routes as $route) {
+            $controllerAction = $route->getController() . '#' . $route->getFunction();
+            $middlewares = empty($route->getMiddlewares()) ? 'None' : implode(',', $route->getMiddlewares());
+
+            printf(
+                "| %-{$methodWidth}s | %-{$pathWidth}s | %-{$controllerWidth}s | %-{$middlewaresWidth}s |\n",
+                $route->getMethod(), $route->getPath(), $controllerAction, $middlewares
+            );
+        }
+
+        echo str_repeat('-', $separatorWidth) . "\n";
     }
 }

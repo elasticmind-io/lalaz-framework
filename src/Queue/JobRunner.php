@@ -9,10 +9,9 @@ namespace Lalaz\Queue;
  * for manually triggering the job processing, either via a cron job or a direct method call.
  * The JobRunner uses the QueueManager to process all jobs in the queue.
  *
- * @namespace Lalaz\Queue
- * @package  elasticmind\lalaz-framework
+ * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
- * @link     https://lalaz.dev
+ * @link    https://lalaz.dev
  */
 class JobRunner
 {

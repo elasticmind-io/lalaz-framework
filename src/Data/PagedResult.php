@@ -9,10 +9,9 @@ namespace Lalaz\Data;
  * It contains information about the total number of records, the current page, the page size, and the records themselves.
  * It also provides helper methods to determine the total number of pages and whether previous or next pages are available.
  *
- * @author  Elasticmind
- * @namespace Lalaz\Data
- * @package  elasticmind\lalaz-framework
- * @link     https://elasticmind.io
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 class PagedResult
 {

@@ -2,14 +2,17 @@
 
 namespace Lalaz;
 
-use Throwable;
-use RuntimeException;
-use Lalaz\Config\Config;
+use \Throwable;
+use \RuntimeException;
+
+use Lalaz\Core\Loader;
+use Lalaz\Core\Config;
 use Lalaz\Data\Database;
 use Lalaz\Event\EventHub;
 use Lalaz\Logging\Logger;
 use Lalaz\Logging\LogToConsole;
 use Lalaz\Routing\Router;
+use Lalaz\View\View;
 
 /**
  * Class Lalaz
@@ -18,10 +21,9 @@ use Lalaz\Routing\Router;
  * main components of the Lalaz framework, such as routing, database connections,
  * and logging. It also handles the execution of the application lifecycle.
  *
- * @namespace Lalaz
- * @package  elasticmind\lalaz-framework
+ * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
- * @link     https://lalaz.dev
+ * @link    https://lalaz.dev
  */
 class Lalaz
 {
@@ -32,13 +34,15 @@ class Lalaz
     public static string $rootDir;
 
     /** @var Router $router The router instance responsible for handling routes */
-    public Router $router;
+    private Router $router;
 
     /** @var Database $db The database connection instance */
     public Database $db;
 
     /** @var EventHub $events The EventHub instance for managing events of the application */
     public EventHub $events;
+
+    // private $logger;
 
     /**
      * Initializes the singleton instance of the Lalaz application.
@@ -56,6 +60,7 @@ class Lalaz
             return self::$instance;
         }
 
+        Loader::loadCoreFunctions();
         Config::load($rootDir . '/.env');
 
         $db = static::initializeDb();
@@ -121,16 +126,21 @@ class Lalaz
      */
     public function run(): void
     {
-        try {
+        ob_start();
+
+        list(, $error) = tryCatch(function () {
             $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
             $uri = htmlspecialchars($_SERVER['REQUEST_URI'] ?? '/', ENT_QUOTES, 'UTF-8');
-
             $this->router->dispatch($method, $uri);
-        } catch (Throwable $ex) {
-            http_response_code(500);
-            $this->logger->error('Application encountered an error: ' . $ex->getMessage());
-            echo 'An error occurred. Please check the application logs for details.';
+        });
+
+        if ($error) {
+            View::renderError([], $error);
         }
+
+        ob_end_flush();
+
+        exit();
     }
 
     /**
@@ -212,5 +222,31 @@ class Lalaz
 
         Config::load($envfile);
         return static::initializeDb();
+    }
+
+    /**
+     * Retrieves the router instance for the application.
+     *
+     * This method provides access to the application's router, allowing
+     * for registering routes, groups, and middleware.
+     *
+     * @return Router The router instance.
+     */
+    public static function router(): Router
+    {
+        return Lalaz::getInstance()->router;
+    }
+
+    /**
+     * Retrieve the logger instance from the Lalaz framework.
+     *
+     * This method provides access to the logger instance, allowing logging of messages, errors, and other information.
+     * It utilizes the singleton instance of the Lalaz framework to retrieve the logger.
+     *
+     * @return mixed The logger instance used by the Lalaz framework.
+     */
+    public static function logger()
+    {
+        return Lalaz::getInstance()->logger;
     }
 }

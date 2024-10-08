@@ -3,6 +3,7 @@
 namespace Lalaz\Queue;
 
 use Lalaz\Lalaz;
+use Lalaz\Core\Config;
 use Lalaz\Data\Database;
 use Lalaz\Queue\Contracts\QueueProviderInterface;
 use Lalaz\Queue\Providers\DatabaseQueueProvider;
@@ -16,10 +17,9 @@ use Lalaz\Queue\Providers\FileQueueProvider;
  * The QueueManager handles adding jobs to the queue and processing them by
  * delegating to the appropriate queue provider.
  *
- * @namespace Lalaz\Queue
- * @package  elasticmind\lalaz-framework
+ * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
- * @link     https://lalaz.dev
+ * @link    https://lalaz.dev
  */
 class QueueManager
 {
@@ -36,7 +36,7 @@ class QueueManager
      */
     public function __construct()
     {
-        $providerType = getenv('QUEUE_PROVIDER') ?: 'database';
+        $providerType = Config::get('QUEUE_PROVIDER') ?: 'database';
 
         switch ($providerType) {
             case 'file':

@@ -3,6 +3,9 @@
 namespace Lalaz\Logging;
 
 use Lalaz\Lalaz;
+use Lalaz\Core\Config;
+use Lalaz\Logging\Formatters\FormatterInterface;
+use Lalaz\Logging\Formatters\TextFormatter;
 
 /**
  * Class Logger
@@ -11,33 +14,39 @@ use Lalaz\Lalaz;
  * It allows writing log messages with different levels (info, debug, error) and
  * directs them to registered log writers.
  *
- * @author  Elasticmind
- * @namespace Lalaz\Logging
- * @package  elasticmind\lalaz-framework
- * @link     https://elasticmind.io
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 final class Logger
 {
     /** @var array $writers Stores the list of log writers to output the log messages */
     private $writers = array();
 
+    protected FormatterInterface $formatter;
+
+    protected function __construct(FormatterInterface $formatter = new TextFormatter())
+    {
+        $this->formatter = $formatter;
+    }
+
     /**
      * Creates a new Logger instance.
      *
      * @return Logger A new Logger instance.
      */
-    public static function create(): Logger
+    public static function create(FormatterInterface $formatter = new TextFormatter()): Logger
     {
-        return new Logger();
+        return new Logger($formatter);
     }
 
     /**
      * Adds a log writer to the logger.
      *
-     * @param ILoggerWriter $writer The log writer to write messages to.
+     * @param LoggerWriterInterface $writer The log writer to write messages to.
      * @return Logger The current Logger instance for method chaining.
      */
-    public function writeTo(ILoggerWriter $writer): Logger
+    public function writeTo(LoggerWriterInterface $writer): Logger
     {
         $this->writers[] = $writer;
         return $this;
@@ -50,9 +59,9 @@ final class Logger
      *
      * @return void
      */
-    public function info($message): void
+    public function info($message, array $context = []): void
     {
-        $this->write('INFO', $message);
+        $this->log('INFO', $message, $context);
     }
 
     /**
@@ -62,9 +71,11 @@ final class Logger
      *
      * @return void
      */
-    public function debug($message): void
+    public function debug($message, array $context = []): void
     {
-        $this->write('DEBUG', $message);
+        if (Config::isDebug()) {
+            $this->log('DEBUG', $message, $context);
+        }
     }
 
     /**
@@ -74,9 +85,15 @@ final class Logger
      *
      * @return void
      */
-    public function error($error): void
+    public function error($message, array $context = []): void
     {
-        $this->write('ERROR', $error);
+        $this->log('ERROR', $message, $context);
+    }
+
+    public function log(string $level, string $message, array $context = []): void
+    {
+        $formattedMessage = $this->formatter->format($level, $message, $context);
+        $this->write($formattedMessage);
     }
 
     /**
@@ -87,13 +104,10 @@ final class Logger
      *
      * @return void
      */
-    private function write(string $level, string $message): void
+    private function write(string $message): void
     {
-        $now = date("Y-m-d H:i:s");
-        $formattedMessage = "[$now] $level: $message";
-
         foreach ($this->writers as $writer) {
-            $writer->write($formattedMessage);
+            $writer->write($message);
         }
     }
 }

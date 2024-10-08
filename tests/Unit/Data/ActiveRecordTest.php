@@ -1,11 +1,5 @@
 <?php
 
-use PHPUnit\Framework\TestCase;
-use Lalaz\Data\ActiveRecord;
+describe('ActiveRecordUnitTests', function() {
 
-use Tests\Stubs\UserStub;
-
-class ActiveRecordTest extends TestCase
-{
-
-}
+});

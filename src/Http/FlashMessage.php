@@ -9,10 +9,9 @@ namespace Lalaz\Http;
  * Flash messages are temporary messages stored in the session and can be displayed
  * on the next request, such as success, error, or informational messages.
  *
- * @author  Elasticmind
- * @namespace Lalaz\Http
- * @package  elasticmind\lalaz-framework
- * @link     https://elasticmind.io
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 trait FlashMessage
 {

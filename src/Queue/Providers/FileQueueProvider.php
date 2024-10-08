@@ -11,10 +11,9 @@ use Lalaz\Queue\Contracts\QueueProviderInterface;
  * Each job is stored as a JSON file in a specified directory. The jobs
  * are processed asynchronously by reading and executing these files.
  *
- * @namespace Lalaz\Queue\Providers
- * @package  elasticmind\lalaz-framework
+ * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
- * @link     https://lalaz.dev
+ * @link    https://lalaz.dev
  */
 class FileQueueProvider implements QueueProviderInterface
 {

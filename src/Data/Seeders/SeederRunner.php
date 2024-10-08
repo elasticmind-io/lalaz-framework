@@ -5,6 +5,16 @@ namespace Lalaz\Data\Seeders;
 use Lalaz\Lalaz;
 use Lalaz\Data\Database;
 
+/**
+ * Class SeederRunner
+ *
+ * This class handles the execution of database seeders. It scans the seeders
+ * directory, loads the seed classes, and executes them to populate the database.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
+ */
 class SeederRunner
 {
     /**
@@ -13,6 +23,13 @@ class SeederRunner
      * @var Database
      */
     protected Database $db;
+
+    /**
+     * The base directory where seeders are located.
+     *
+     * @var string
+     */
+    protected string $baseDir = './src/Db/Seeders/';
 
     /**
      * SeederRunner constructor.
@@ -32,10 +49,8 @@ class SeederRunner
      */
     public function runSeeder(string $seederClass): void
     {
-        static $baseDir = './src/Db/Seeders/';
-
         $seederClassName = ucwords($seederClass);
-        $filePath = $baseDir . str_replace('/', DIRECTORY_SEPARATOR, $seederClassName) . '.php';
+        $filePath = $this->baseDir . str_replace('/', DIRECTORY_SEPARATOR, $seederClassName) . '.php';
 
         if (file_exists($filePath)) {
             require_once $filePath;
@@ -54,15 +69,57 @@ class SeederRunner
     }
 
     /**
-     * Execute all seeders provided.
+     * Execute all seeders in the base directory.
      *
-     * @param array $seeders An array of fully qualified seeder class names.
+     * This method will scan the seeder directory and execute all seeder classes found.
+     *
      * @return void
      */
-    public function runSeeders(array $seeders): void
+    public function runSeeders(): void
     {
-        foreach ($seeders as $seederClass) {
-            $this->runSeeder($seederClass);
+        $seederFiles = $this->getSeederFiles();
+
+        foreach ($seederFiles as $filePath) {
+            // Extract the seeder class name from the file path
+            $seederClassName = $this->extractSeederClassName($filePath);
+            $this->runSeeder($seederClassName);
         }
+    }
+
+    /**
+     * Get all PHP seeder files in the base directory.
+     *
+     * Scans the directory recursively to find all PHP files.
+     *
+     * @return array An array of file paths for seeder classes.
+     */
+    protected function getSeederFiles(): array
+    {
+        $rii = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->baseDir));
+        $files = [];
+
+        foreach ($rii as $file) {
+            if ($file->isFile() && $file->getExtension() === 'php') {
+                $files[] = $file->getPathname();
+            }
+        }
+
+        return $files;
+    }
+
+    /**
+     * Extract the seeder class name from its file path.
+     *
+     * Converts a file path into the corresponding seeder class name.
+     *
+     * @param string $filePath The path to the seeder file.
+     * @return string The fully qualified seeder class name.
+     */
+    protected function extractSeederClassName(string $filePath): string
+    {
+        // Remove base directory and extension
+        $relativePath = str_replace($this->baseDir, '', $filePath);
+        $className = str_replace(DIRECTORY_SEPARATOR, '\\', $relativePath);
+        return preg_replace('/\.php$/', '', $className);
     }
 }

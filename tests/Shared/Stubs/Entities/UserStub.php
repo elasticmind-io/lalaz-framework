@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Tests\Stubs\Entities;
+namespace Tests\Shared\Stubs\Entities;
 
 use Lalaz\Data\ActiveRecord;
 use Lalaz\Data\SoftDeletes;

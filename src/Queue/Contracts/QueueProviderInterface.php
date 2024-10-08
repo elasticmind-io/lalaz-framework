@@ -9,10 +9,9 @@ namespace Lalaz\Queue\Contracts;
  * implement methods for adding jobs to the queue and processing the jobs in the queue.
  * This abstraction allows for different queue backends (e.g., Database, File System).
  *
- * @namespace Lalaz\Queue\Contracts
- * @package  elasticmind\lalaz-framework
+ * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
- * @link     https://lalaz.dev
+ * @link    https://lalaz.dev
  */
 interface QueueProviderInterface
 {

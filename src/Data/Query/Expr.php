@@ -9,7 +9,9 @@ namespace Lalaz\Data\Query;
  * It provides methods to construct WHERE clause conditions for SQL queries
  * in a fluent and chainable manner.
  *
- * @package Lalaz\Data\Query
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 class Expr
 {
