@@ -1,5 +1,7 @@
 <?php
 
+require_once './src/Core/Functions/tryCatch.php';
+
 describe('TryCatchUnitTests', function() {
     it('executes the try block successfully without exception', function () {
         // Arrange & Act

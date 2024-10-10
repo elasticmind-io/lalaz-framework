@@ -4,7 +4,7 @@ namespace Lalaz\Data;
 
 use Exception;
 use Lalaz\Data\Query\Queries;
-use Lalaz\Data\Query\QueryBuilderInterface;
+use Lalaz\Data\Query\SelectQueryBuilder;
 use Lalaz\Data\Query\Expressions;
 
 /**
@@ -36,8 +36,8 @@ class Relation
     /** @var string|null The owner key in the related model */
     protected ?string $ownerKey;
 
-    /** @var QueryBuilderInterface The query builder instance */
-    protected QueryBuilderInterface $query;
+    /** @var SelectQueryBuilder The query builder instance */
+    protected SelectQueryBuilder $query;
 
     protected array $parameters = [];
 
@@ -177,7 +177,7 @@ class Relation
      */
     public function orderBy(string $column, string $direction = 'ASC'): self
     {
-        $this->query->orderBy($column, $direction);
+        $this->getQuery()->orderBy($column, $direction);
         return $this;
     }
 
@@ -189,19 +189,7 @@ class Relation
      */
     public function limit(int $limit): self
     {
-        $this->query->limit($limit);
-        return $this;
-    }
-
-    /**
-     * Sets an offset for the records retrieved.
-     *
-     * @param int $offset The offset value.
-     * @return $this
-     */
-    public function offset(int $offset): self
-    {
-        $this->query->offset($offset);
+        $this->getQuery()->limit($limit);
         return $this;
     }
 
@@ -275,7 +263,7 @@ class Relation
      */
     public function join(string $table, string $condition, string $type = 'INNER'): self
     {
-        $this->query->innerJoin($table, $condition, $type);
+        $this->getQuery()->innerJoin($table, $condition, $type);
         return $this;
     }
 
@@ -287,7 +275,7 @@ class Relation
      */
     public function groupBy($columns): self
     {
-        $this->query->groupBy($columns);
+        $this->getQuery()->groupBy($columns);
         return $this;
     }
 
@@ -299,16 +287,16 @@ class Relation
      */
     public function having(string $condition): self
     {
-        $this->query->having($condition);
+        $this->getQuery()->having($condition);
         return $this;
     }
 
     /**
      * Get the underlying query builder instance.
      *
-     * @return IQueryBuilder
+     * @return SelectQueryBuilder
      */
-    public function getQuery(): QueryBuilderInterface
+    public function getQuery(): SelectQueryBuilder
     {
         return $this->query;
     }
