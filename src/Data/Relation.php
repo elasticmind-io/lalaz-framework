@@ -2,9 +2,10 @@
 
 namespace Lalaz\Data;
 
+use Exception;
 use Lalaz\Data\Query\Queries;
 use Lalaz\Data\Query\QueryBuilderInterface;
-use Exception;
+use Lalaz\Data\Query\Expressions;
 
 /**
  * Class Relation
@@ -35,8 +36,10 @@ class Relation
     /** @var string|null The owner key in the related model */
     protected ?string $ownerKey;
 
-    /** @var IQueryBuilder The query builder instance */
+    /** @var QueryBuilderInterface The query builder instance */
     protected QueryBuilderInterface $query;
+
+    protected array $parameters = [];
 
     /** @var string|null The pivot table name (used in belongsToMany) */
     protected ?string $pivotTable;
@@ -85,22 +88,24 @@ class Relation
      */
     protected function initializeQuery(): void
     {
-        /** @var ActiveRecord $relatedModel */
         $relatedModel = $this->getRelatedModel();
         $tableName = $relatedModel::tableName();
-        $this->query = Queries::select("$tableName.*")->from($tableName);
+
+        $this->query = Queries::select("$tableName.*")
+            ->from($tableName);
 
         switch ($this->relationType) {
             case 'hasMany':
             case 'hasOne':
-                $this->query->where("$tableName.$this->foreignKey = :foreignKeyValue");
-                $this->query->parameters(['foreignKeyValue' => $this->localValue]);
+                $expr = Expressions::create()->eq('foreignKeyValue', $this->localValue);
+                $this->query->where($expr->expression());
+                $this->parameters = $expr->parameters();
                 break;
 
             case 'belongsTo':
                 $ownerKey = $this->ownerKey ?? $relatedModel::primaryKey();
-                $this->query->where("$tableName.$ownerKey = :ownerKeyValue");
-                $this->query->parameters(['ownerKeyValue' => $this->localValue]);
+                $expr = Expressions::create()->eq('ownerKeyValue', $this->localValue);
+                $this->query->where($expr->expression());
                 break;
 
             case 'belongsToMany':
@@ -131,17 +136,14 @@ class Relation
      */
     public function get()
     {
-        /** @var ActiveRecord $relatedModel */
         $relatedModel = $this->getRelatedModel();
-
-        // Apply soft delete constraint if necessary
         $this->query = $relatedModel::applySoftDeleteConstraint($this->query);
 
         if ($this->relationType === 'hasOne' || $this->relationType === 'belongsTo') {
-            return $relatedModel::queryOne($this->query, $this->query->getParameters());
-        } else {
-            return $relatedModel::queryAll($this->query, $this->query->getParameters());
+            return $relatedModel::queryOne($this->query, $expr->parameters());
         }
+
+        return $relatedModel::queryAll($this->query, $expr->parameters());
     }
 
     /**
@@ -273,7 +275,7 @@ class Relation
      */
     public function join(string $table, string $condition, string $type = 'INNER'): self
     {
-        $this->query->join($table, $condition, $type);
+        $this->query->innerJoin($table, $condition, $type);
         return $this;
     }
 
@@ -306,7 +308,7 @@ class Relation
      *
      * @return IQueryBuilder
      */
-    public function getQuery(): IQueryBuilder
+    public function getQuery(): QueryBuilderInterface
     {
         return $this->query;
     }

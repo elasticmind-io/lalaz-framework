@@ -42,7 +42,8 @@ class Lalaz
     /** @var EventHub $events The EventHub instance for managing events of the application */
     public EventHub $events;
 
-    // private $logger;
+    /** @var Logger $logger The Logger instance of the application */
+    private $logger;
 
     /**
      * Initializes the singleton instance of the Lalaz application.

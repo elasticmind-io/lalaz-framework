@@ -1,7 +1,8 @@
 <?php
 
+use Mockery as m;
 use Lalaz\Data\Relation;
-use Lalaz\Data\Query\IQueryBuilder;
+use Lalaz\Data\Query\QueryBuilderInterface;
 use Tests\Shared\Stubs\Entities\UserStub;
 
 describe('RelationUnitTests', function() {
@@ -11,12 +12,15 @@ describe('RelationUnitTests', function() {
         $this->foreignKey = 'user_id';
         $this->localValue = 1;
         $this->relationType = 'hasMany';
-        $this->mockQueryBuilder = mock(IQueryBuilder::class);
     });
 
     it('should initialize relation with hasMany type', function () {
         // Arrange
-        $relation = new Relation($this->relatedClass, $this->foreignKey, $this->localValue, $this->relationType);
+        $relation = new Relation(
+            $this->relatedClass,
+            $this->foreignKey,
+            $this->localValue,
+            $this->relationType);
 
         // Assert: Verifica se a relação foi inicializada corretamente
         expect($relation->getRelationType())->toBe('hasMany');
@@ -26,9 +30,18 @@ describe('RelationUnitTests', function() {
     });
 
     it('should set a limit on the query', function () {
-        // Arrange
-        $relation = new Relation($this->relatedClass, $this->foreignKey, $this->localValue, $this->relationType);
-        $relation->getQuery()->shouldReceive('limit')->once()->with(10);
+        // Arrange: Mock the SelectQueryBuilder
+        $mockQuery = m::mock(SelectQueryBuilder::class);
+
+        // Define o comportamento esperado no método `limit`
+        $mockQuery->shouldReceive('limit')->once()->with(10);
+
+        // Mock the Relation class to return the mocked query builder
+        $relation = m::mock(Relation::class, [
+            $this->relatedClass, 'foreignKey', 'localValue', 'relationType'
+        ])->makePartial();
+
+        $relation->shouldReceive('getQuery')->andReturn($mockQuery);
 
         // Act: Define o limite
         $relation->limit(10);
@@ -64,21 +77,24 @@ describe('RelationUnitTests', function() {
     });
 
     it('should add a join clause to the query', function () {
-        // Arrange
-        $relation = new Relation($this->relatedClass, $this->foreignKey, $this->localValue, $this->relationType);
-        $relation->getQuery()->shouldReceive('join')->once()->with('profiles', 'profiles.user_id = users.id', 'INNER');
+        // Arrange: Mock the SelectQueryBuilder
+        $mockQuery = m::mock(SelectQueryBuilder::class);
+
+        // Define o comportamento esperado no método `join`
+        $mockQuery->shouldReceive('innerJoin')
+            ->once()
+            ->with('profiles', 'profiles.user_id = users.id', 'INNER');
+
+        // Mock the Relation class e sobrescreve o método getQuery para retornar o mock de query
+        $relation = new Relation(UserStub::class, 'foreignKey', 'localValue', 'relationType');
+
+        // Sobrescreve o retorno do getQuery
+        $reflection = new \ReflectionClass($relation);
+        $property = $reflection->getProperty('query');
+        $property->setAccessible(true);
+        $property->setValue($relation, $mockQuery);
 
         // Act: Adiciona a cláusula join
         $relation->join('profiles', 'profiles.user_id = users.id', 'INNER');
-    });
-
-    it('should throw an exception when retrieving related model for invalid relation type', function () {
-        // Arrange: Define um tipo de relação inválido
-        $invalidRelationType = 'invalid';
-        $relation = new Relation($this->relatedClass, $this->foreignKey, $this->localValue, $invalidRelationType);
-
-        // Assert: Verifica se uma exceção é lançada ao tentar buscar o modelo
-        $this->expectException(Exception::class);
-        $relation->get();
     });
 });

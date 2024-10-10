@@ -923,7 +923,8 @@ abstract class ActiveRecord extends Model
     {
         $tableName = static::tableName();
 
-        $query = Queries::select('*')->from($tableName)
+        $query = Queries::select('*')
+            ->from($tableName)
             ->where($expr->expression());
 
         $query = static::applySoftDeleteConstraint($query);
