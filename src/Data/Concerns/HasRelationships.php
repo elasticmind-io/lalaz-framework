@@ -18,7 +18,7 @@ trait HasRelationships
     {
         $foreignKey = $foreignKey ?: strtolower(static::class) . '_id';
         $localKey = $localKey ?: static::primaryKey();
-        return new Relation($relatedClass, $foreignKey, $this->$localKey, 'hasMany');
+        return new Relation($relatedClass, $foreignKey, $localKey, 'hasMany');
     }
 
     /**
@@ -33,7 +33,7 @@ trait HasRelationships
     {
         $foreignKey = $foreignKey ?: strtolower(static::class) . '_id';
         $localKey = $localKey ?: static::primaryKey();
-        return new Relation($relatedClass, $foreignKey, $this->$localKey, 'hasOne');
+        return new Relation($relatedClass, $this->$foreignKey, $localKey, 'hasOne');
     }
 
     /**
@@ -48,7 +48,7 @@ trait HasRelationships
     {
         $foreignKey = $foreignKey ?: strtolower($relatedClass) . '_id';
         $ownerKey = $ownerKey ?: (new $relatedClass())->primaryKey();
-        return new Relation($relatedClass, $foreignKey, $this->$foreignKey, 'belongsTo', $ownerKey);
+        return new Relation($relatedClass, $foreignKey, $this->$foreignKey, 'belongsTo', null, $ownerKey);
     }
 
     /**
