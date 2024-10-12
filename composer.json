@@ -3,6 +3,7 @@
     "type": "project",
     "description": "The Lalaz framework.",
     "keywords": ["lalaz", "framework"],
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "Lalaz\\": "src/",
