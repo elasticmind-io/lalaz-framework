@@ -6,6 +6,6 @@ define('LALAZ_START', microtime(true));
 // Register the Composer autoloader...
 require __DIR__ . '/vendor/autoload.php';
 
-use Lalaz\Cli;
+use Lalaz\Core\Cli;
 
 Cli::command($argv);

@@ -4,7 +4,10 @@
     "autoload": {
         "psr-4": {
             "App\\": "src/App"
-        }
+        },
+        "files": [
+            "src/App/Config/bootstrap.php"
+        ]
     },
     "authors": [
         {
