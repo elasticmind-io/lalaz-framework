@@ -62,7 +62,7 @@ class Relation
     public function __construct(
         string $relatedClass,
         string $foreignKey,
-        $localValue,
+        mixed $localValue,
         string $relationType,
         ?string $localKey = null,
         ?string $ownerKey = null,
@@ -106,6 +106,7 @@ class Relation
                 $ownerKey = $this->ownerKey ?? $relatedModel::primaryKey();
                 $expr = Expressions::create()->eq($this->ownerKey, $this->localValue);
                 $this->query->where($expr->expression());
+                $this->parameters = $expr->parameters();
                 break;
 
             case 'belongsToMany':
