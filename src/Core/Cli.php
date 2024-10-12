@@ -140,6 +140,10 @@ class Cli
                 static::routes();
                 break;
 
+            case 'middlewares':
+                static::showMiddlewaresForRoute((int)$name);
+                break;
+
             case 'serve':
                 $port = $args[2] ?? '8080';
                 $phpServerCmd = "php -S localhost:$port";
@@ -201,43 +205,68 @@ class Cli
      */
     private static function routes(): void
     {
-        $router = Lalaz::getInstance()->router;
+        $router = Lalaz::router();
         $routes = $router->getRoutes();
 
         // Calculate column widths based on the longest content in each column
         $methodWidth = max(array_map(fn($route) => strlen($route->getMethod()), $routes));
         $pathWidth = max(array_map(fn($route) => strlen($route->getPath()), $routes));
         $controllerWidth = max(array_map(fn($route) => strlen($route->getController() . '#' . $route->getFunction()), $routes));
-        $middlewaresWidth = max(array_map(fn($route) => strlen(empty($route->getMiddlewares()) ? 'None' : implode(',', $route->getMiddlewares())), $routes));
+        $hasMiddlewaresWidth = strlen('Has Middlewares');
+        $indexWidth = strlen('#') + 1;
 
         echo "\n";
 
         // Adjust column widths to fit the headers
-        $methodWidth = max($methodWidth, strlen('METHOD')) + 2;
+        $methodWidth = max($methodWidth, strlen('Method')) + 2;
         $pathWidth = max($pathWidth, strlen('URI')) + 2;
-        $controllerWidth = max($controllerWidth, strlen('CONTROLLER#ACTION')) + 2;
-        $middlewaresWidth = max($middlewaresWidth, strlen('MIDDLEWARES')) + 2;
+        $controllerWidth = max($controllerWidth, strlen('Controller#action')) + 2;
 
-        // Print table headers
+        // Print table headers with the index as the first column
         printf(
-            "| %-{$methodWidth}s | %-{$pathWidth}s | %-{$controllerWidth}s | %-{$middlewaresWidth}s |\n",
-            'Method', 'Path', 'Controller#action', 'Middlewares'
+            "| %-{$indexWidth}s | %-{$methodWidth}s | %-{$pathWidth}s | %-{$controllerWidth}s | %-{$hasMiddlewaresWidth}s |\n",
+            '#', 'Method', 'URI', 'Controller#action', 'Has Middlewares'
         );
 
-        $separatorWidth = $methodWidth + $pathWidth + $controllerWidth + $middlewaresWidth + 13;
+        $separatorWidth = $indexWidth + $methodWidth + $pathWidth + $controllerWidth + $hasMiddlewaresWidth + 16;
         echo str_repeat('-', $separatorWidth) . "\n";
 
-        // Print each route as a table row
-        foreach ($routes as $route) {
+        // Print each route as a table row with a numbered index as the first column
+        foreach ($routes as $index => $route) {
             $controllerAction = $route->getController() . '#' . $route->getFunction();
-            $middlewares = empty($route->getMiddlewares()) ? 'None' : implode(',', $route->getMiddlewares());
+            $hasMiddlewares = empty($route->getMiddlewares()) ? 'No' : 'Yes';
 
             printf(
-                "| %-{$methodWidth}s | %-{$pathWidth}s | %-{$controllerWidth}s | %-{$middlewaresWidth}s |\n",
-                $route->getMethod(), $route->getPath(), $controllerAction, $middlewares
+                "| %-{$indexWidth}s | %-{$methodWidth}s | %-{$pathWidth}s | %-{$controllerWidth}s | %-{$hasMiddlewaresWidth}s |\n",
+                $index + 1, $route->getMethod(), $route->getPath(), $controllerAction, $hasMiddlewares
             );
         }
 
         echo str_repeat('-', $separatorWidth) . "\n";
+    }
+
+    private static function showMiddlewaresForRoute(int $routeIndex): void
+    {
+        $router = Lalaz::router();
+        $routes = $router->getRoutes();
+
+        if (!isset($routes[$routeIndex - 1])) {
+            echo "No route found.\n";
+            return;
+        }
+
+        $route = $routes[$routeIndex - 1];
+        $middlewares = $route->getMiddlewares();
+
+        if (empty($middlewares)) {
+            echo "No middleares for {$route->getMethod()} {$route->getPath()}\n";
+        } else {
+            echo str_repeat('-', 60) . "\n";
+            echo "{$route->getMethod()} {$route->getPath()}\n";
+            echo str_repeat('-', 60) . "\n";
+            foreach ($middlewares as $middleware) {
+                echo "- " . (is_object($middleware) ? get_class($middleware) : $middleware) . "\n";
+            }
+        }
     }
 }
