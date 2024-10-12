@@ -1,0 +1,36 @@
+{
+    "name": "elasticmind/lalaz-framework",
+    "type": "project",
+    "description": "The Lalaz framework.",
+    "keywords": ["lalaz", "framework"],
+    "autoload": {
+        "psr-4": {
+            "Lalaz\\": "src/",
+            "Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Gregory Serrao",
+            "email": "ola@elasticmind.io"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "mockery/mockery": "^1.6",
+        "twig/twig": "^3.0"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require-dev": {
+        "pestphp/pest": "^3.3"
+    }
+}
