@@ -195,7 +195,7 @@ class Router
             return;
         }
 
-        $path = rtrim($path, '/');
+        $path = ($path !== '/') ? rtrim($path, '/') : $path;
         $path = $this->removeQueryString($path);
 
         $matchRouteAndMethod = function($route, $path, &$params, $method) {
