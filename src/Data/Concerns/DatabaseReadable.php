@@ -23,10 +23,6 @@ trait DatabaseReadable
     {
         $sql = $builder->build();
 
-        print($builder->build());
-        print "\n";
-        var_dump($parameters);
-
         $statement = static::prepareAndBindParameters($sql, $parameters);
         $statement->execute();
 
