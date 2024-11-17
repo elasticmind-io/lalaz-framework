@@ -2,6 +2,7 @@
 
 namespace Lalaz\Http;
 
+use stdClass;
 use Lalaz\View\View;
 
 /**
@@ -15,7 +16,7 @@ use Lalaz\View\View;
  * @author  Elasticmind <ola@elasticmind.io>
  * @link    https://lalaz.dev
  */
-class Response
+class Response extends stdClass
 {
     use FlashMessage;
 
