@@ -2,6 +2,8 @@
 
 namespace Lalaz\Http;
 
+use stdClass;
+
 /**
  * Class Request
  *
@@ -13,7 +15,7 @@ namespace Lalaz\Http;
  * @author  Elasticmind <ola@elasticmind.io>
  * @link    https://lalaz.dev
  */
-class Request
+class Request extends stdClass
 {
     /** @var string The HTTP method of the request (GET, POST, etc.) */
     private $method;
