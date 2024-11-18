@@ -223,4 +223,15 @@ trait DatabaseWritable
     {
         return !empty($this->dirty);
     }
+
+    /**
+     * Update model's timestamp
+     *
+     * @return bool
+     */
+    public function touch(): bool
+    {
+        $this->updateTimestamps();
+        return $this->performUpdate();
+    }
 }

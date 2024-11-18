@@ -108,7 +108,7 @@ class Lalaz
         ?Logger $logger = null,
         ?Database $db = null,
         ?Router $router = null,
-        ?EventHub $events)
+        ?EventHub $events = null)
     {
         self::$rootDir = $rootDir;
         $this->logger = $logger ?? static::initializeDefaultLogger();

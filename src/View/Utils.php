@@ -104,11 +104,13 @@ class Utils
                 }
             }
 
-            if (!isset($manifest[$path])) {
+            $fileKey = "App/Assets/{$path}";
+
+            if (!isset($manifest[$fileKey])) {
                 return '';
             }
 
-            $file = $manifest[$path]['file'];
+            $file = $manifest[$fileKey]['file'];
             return "/public/dist/$file";
         });
     }

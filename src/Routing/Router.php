@@ -64,7 +64,7 @@ class Router
         $controllerClassName = $this->controllerLookup($controllerName);
 
         if (!$controllerClassName) {
-            die("Controller ${controllerName} was not found!");
+            die("Controller {$controllerName} was not found!");
         }
 
         return $this->map($method, $path, $controllerClassName, $function, $middlewares);
@@ -271,7 +271,7 @@ class Router
     private function controllerLookup($controllerName): string | false
     {
         foreach (['App\\Controllers'] as $namespace) {
-            $className = "${namespace}\\${controllerName}";
+            $className = "{$namespace}\\{$controllerName}";
 
             if (class_exists($className)) {
                 return $className;
