@@ -64,6 +64,6 @@ abstract class Model
             return '';
         }
 
-        return $this->{$name};
+        return $this->{$key};
     }
 }
