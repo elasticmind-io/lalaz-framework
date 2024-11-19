@@ -110,6 +110,25 @@ class Request extends stdClass
     }
 
     /**
+     * Returns the the body without sanization.
+     *
+     * @param string $name Optional. The name of the parameter to retrieve.
+     * @return mixed The value of the parameter, or all parameters if no name is provided.
+     */
+    public function unsafeBody($name = '')
+    {
+        if (strlen($name) === 0) {
+            return $_POST;
+        }
+
+        if (array_key_exists($name, $_POST)) {
+            return $_POST[$name];
+        }
+
+        return '';
+    }
+
+    /**
      * Returns a specific cookie by name.
      *
      * @param string $name The name of the cookie.
