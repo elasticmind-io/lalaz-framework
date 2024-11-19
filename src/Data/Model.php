@@ -51,4 +51,19 @@ abstract class Model
             $this->hide[] = $prop;
         }
     }
+
+    /**
+     * Get the given attribute.
+     *
+     * @param string $key
+     * @return mixed
+     */
+    public function get(string $key) : mixed
+    {
+        if (!$this->hasAttribute($key)) {
+            return '';
+        }
+
+        return $this->{$name};
+    }
 }
