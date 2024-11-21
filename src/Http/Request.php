@@ -258,6 +258,6 @@ class Request extends stdClass
     private function sanitize($data = array()): mixed
     {
         if (empty($data)) return [];
-        return filter_var_array($data, FILTER_SANITIZE_STRING);
+        return filter_var_array($data, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     }
 }
