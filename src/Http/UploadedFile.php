@@ -58,17 +58,6 @@ class UploadedFile
     }
 
     /**
-     * Delete the file to the given storage path.
-     *
-     * @param string $path The destination path.
-     */
-    public function delete(string $path): void
-    {
-        $storage = new StorageManager();
-        return $storage->getDriver()->delete($path);
-    }
-
-    /**
      * Returns the original file name.
      *
      * @return string The original file name.
