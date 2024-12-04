@@ -202,12 +202,11 @@ trait DatabaseReadable
      * Find one model matching the given expression.
      *
      * @param Expr $expr
-     * @param array $orderBy
      * @param array $with
      * @return static|null
      * @throws Exception
      */
-    public static function findOneByExpression(Expr $expr, array $orderBy = [], array $with = []): ?self
+    public static function findOneByExpression(Expr $expr, array $with = []): ?self
     {
         $tableName = static::tableName();
 
@@ -216,9 +215,8 @@ trait DatabaseReadable
             ->where($expr->expression());
 
         $query = static::applySoftDeleteConstraint($query);
-        $query = static::applyOrderBy($query, $orderBy);
 
-        $result = static::queryOne($query, $expr->parameters());
+        $model = static::queryOne($query, $expr->parameters());
 
         if (!$result) {
             return null;
@@ -228,7 +226,7 @@ trait DatabaseReadable
             $model->$relation = $model->$relation()->get();
         }
 
-        return $result;
+        return $model;
     }
 
     /**
