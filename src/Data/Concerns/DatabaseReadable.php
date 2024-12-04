@@ -215,10 +215,9 @@ trait DatabaseReadable
             ->where($expr->expression());
 
         $query = static::applySoftDeleteConstraint($query);
-
         $model = static::queryOne($query, $expr->parameters());
 
-        if (!$result) {
+        if (!$model) {
             return null;
         }
 
