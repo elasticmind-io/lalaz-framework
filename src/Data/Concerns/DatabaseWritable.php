@@ -119,9 +119,6 @@ trait DatabaseWritable
         $whereClause = $this->buildWhereClause($primaryKey);
 
         $sql = "UPDATE $tableName SET $setClause WHERE $whereClause";
-
-        die($sql);
-
         $statement = static::prepare($sql);
 
         foreach ($attributes as $attribute => $value) {
