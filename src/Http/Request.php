@@ -181,7 +181,7 @@ class Request extends stdClass
         }
 
         if ($_FILES[$key]['error'] !== UPLOAD_ERR_OK) {
-            echo "Erro no upload: " . $_FILES[$key]['error'];
+            return null;
         }
 
         return new UploadedFile($_FILES[$key]);
