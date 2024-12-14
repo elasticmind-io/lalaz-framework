@@ -45,9 +45,9 @@ class View
         echo $twig->render("$view.twig", $data);
     }
 
-    public static function renderJson(array $data = [], $stausCode = 200): variant_mod
+    public static function renderJson(array $data = [], $statusCode = 200): void
     {
-        http_response_code($statucCode);
+        http_response_code($statusCode);
         header('Content-Type: application/json');
         echo json_encode([
             'status' => 'error',

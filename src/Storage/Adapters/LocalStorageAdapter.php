@@ -66,7 +66,10 @@ class LocalStorageAdapter implements StorageInterface
      */
     public function delete(string $path): bool
     {
-        return unlink($this->basePath . ltrim($path, '/'));
+        if (file_exists($path)) return unlink($path);
+        $file = $this->basePath . ltrim($path, '/');
+        if (file_exists($file)) return unlink($file);
+        return false;
     }
 
     /**
@@ -77,7 +80,7 @@ class LocalStorageAdapter implements StorageInterface
      */
     public function getPublicUrl(string $path): string
     {
-        return '/public/static/' . ltrim($path, '/');
+        return ltrim($this->basePath, '.') . ltrim($path, '/');
     }
 
     /**

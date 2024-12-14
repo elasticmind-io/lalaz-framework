@@ -173,10 +173,11 @@ trait DatabaseReadable
      * @param int $currentPage The current page for pagination (default value: 1).
      * @param int $take The number of records to retrieve per page (default value: 50).
      * @param array $orderBy An optional array to define the sorting of the results.
+     * @param array $with
      *
      * @return PagedResult An object containing the paginated results, total record count, and other pagination information.
      */
-    public static function findAllPaged($currentPage = 1, $take = 50, $orderBy = array()): PagedResult
+    public static function findAllPaged($currentPage = 1, $take = 50, $orderBy = array(), array $with = array()): PagedResult
     {
         $tableName = static::tableName();
 
@@ -193,6 +194,52 @@ trait DatabaseReadable
         $count = static::count();
         $result = static::queryAll($query);
 
+        foreach ($result as $model) {
+            foreach ($with as $relation) {
+                $model->$relation = $model->$relation()->get();
+            }
+        }
+
+        $paginated = new PagedResult($count, $take, $currentPage, $result);
+
+        return $paginated;
+    }
+
+    /**
+     * Retrieves a paginated result of all records from the table associated with the class.
+     *
+     * @param Expr $expr
+     * @param int $currentPage The current page for pagination (default value: 1).
+     * @param int $take The number of records to retrieve per page (default value: 50).
+     * @param array $orderBy An optional array to define the sorting of the results.
+     * @param array $with
+     *
+     * @return PagedResult An object containing the paginated results, total record count, and other pagination information.
+     */
+    public static function findAllPagedByExpression($expr, $currentPage = 1, $take = 50, $orderBy = array(), array $with = array()): PagedResult
+    {
+        $tableName = static::tableName();
+
+        $pageIndex = $currentPage - 1;
+        $start = $pageIndex * $take;
+
+        $query = Queries::select('*')
+            ->from($tableName)
+            ->where($expr->expression())
+            ->paginate($start, $take);
+
+        $query = static::applySoftDeleteConstraint($query);
+        $query = static::applyOrderBy($query, $orderBy);
+
+        $count = static::count();
+        $result = static::queryAll($query, $expr->parameters());
+
+        foreach ($result as $model) {
+            foreach ($with as $relation) {
+                $model->$relation = $model->$relation()->get();
+            }
+        }
+
         $paginated = new PagedResult($count, $take, $currentPage, $result);
 
         return $paginated;
@@ -207,7 +254,7 @@ trait DatabaseReadable
      * @return static|null
      * @throws Exception
      */
-    public static function findOneByExpression(Expr $expr, array $orderBy = [], array $with = []): ?self
+    public static function findOneByExpression(Expr $expr, array $with = []): ?self
     {
         $tableName = static::tableName();
 
@@ -216,7 +263,6 @@ trait DatabaseReadable
             ->where($expr->expression());
 
         $query = static::applySoftDeleteConstraint($query);
-        $query = static::applyOrderBy($query, $orderBy);
 
         $result = static::queryOne($query, $expr->parameters());
 
@@ -225,7 +271,7 @@ trait DatabaseReadable
         }
 
         foreach ($with as $relation) {
-            $model->$relation = $model->$relation()->get();
+            $result->$relation = $result->$relation()->get();
         }
 
         return $result;
@@ -251,15 +297,15 @@ trait DatabaseReadable
         $query = static::applySoftDeleteConstraint($query);
         $query = static::applyOrderBy($query, $orderBy);
 
-        $results = static::queryAll($query, $expr->parameters());
+        $result = static::queryAll($query, $expr->parameters());
 
-        foreach ($results as $model) {
+        foreach ($result as $model) {
             foreach ($with as $relation) {
                 $model->$relation = $model->$relation()->get();
             }
         }
 
-        return $results;
+        return $result;
     }
 
     /**
