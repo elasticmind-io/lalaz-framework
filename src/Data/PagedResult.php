@@ -79,7 +79,7 @@ class PagedResult implements JsonSerializable
      * Determines how the object will be serialized.
      *
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return [
             'totalRecords' => $this->totalRecords,
