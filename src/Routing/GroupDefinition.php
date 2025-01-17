@@ -36,10 +36,10 @@ class GroupDefinition
      *
      * @return $this
      */
-    public function useAuthentication(): GroupDefinition
+    public function useAuthentication(string $loginUrl = ''): GroupDefinition
     {
         foreach ($this->routes as $route) {
-            $route->useAuthentication();
+            $route->useAuthentication($loginUrl);
         }
 
         return $this;

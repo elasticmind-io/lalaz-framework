@@ -18,6 +18,13 @@ use Lalaz\Http\SessionManager;
  */
 class AuthenticationMiddleware extends Middleware
 {
+    private string $loginUrl = '';
+
+    public function __construct(string $loginUrl = '')
+    {
+        $this->loginUrl = $loginUrl;
+    }
+
     /**
      * Handle the incoming request to verify user authentication.
      *
@@ -31,6 +38,11 @@ class AuthenticationMiddleware extends Middleware
         $user = SessionManager::get('__luser');
 
         if (!$user) {
+            if (strlen($this->loginUrl) > 0) {
+                $res->redirect($this->loginUrl);
+                return;
+            }
+
             die('Forbidden');
             return;
         }
