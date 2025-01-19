@@ -319,7 +319,6 @@ trait DatabaseReadable
         $tableName = static::tableName();
 
         $query = Queries::select('COUNT(*) AS count')->from($tableName);
-
         $query = static::applySoftDeleteConstraint($query);
 
         $sql = $query->build();

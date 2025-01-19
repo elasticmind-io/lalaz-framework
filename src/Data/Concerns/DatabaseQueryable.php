@@ -52,7 +52,7 @@ trait DatabaseQueryable
      */
     protected static function prepare(string $sql): PDOStatement
     {
-        return Lalaz::getInstance()->db->prepare($sql);
+        return Lalaz::db()->prepare($sql);
     }
 
     /**

@@ -48,4 +48,15 @@ class Loader
         $functionsDirectory = __DIR__ . '/Functions';
         self::loadFiles($functionsDirectory);
     }
+
+    /**
+     * Load all files from the app config directory.
+     *
+     * @return void
+     */
+    public static function loadAppConfiguration()
+    {
+        $path = Lalaz::appDirectory() . '/Config';
+        self::loadFiles($path);
+    }
 }

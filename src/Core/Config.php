@@ -193,9 +193,9 @@ class Config
      *
      * @return bool True if the environment is 'debug', false otherwise.
      */
-    public static function isDebug()
+    public static function isDebug(): bool
     {
-        return self::isEnv('debug');
+        return (bool) self::get('APP_DEBUG');
     }
 
     /**
@@ -203,7 +203,7 @@ class Config
      *
      * @return bool True if the environment is 'development', false otherwise.
      */
-    public static function isDevelopment()
+    public static function isDevelopment(): bool
     {
         return self::isEnv('development');
     }

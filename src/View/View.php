@@ -7,8 +7,6 @@ use Lalaz\Lalaz;
 use Lalaz\Core\Config;
 use Lalaz\Http\Request;
 use Lalaz\Http\FlashMessage;
-use Twig\Loader\FilesystemLoader;
-use Twig\Environment;
 
 /**
  * Class View
@@ -35,14 +33,16 @@ class View
      */
     public static function render(string $view, array $data = [], $statucCode = 200): void
     {
-        $loader = new FilesystemLoader(Lalaz::$rootDir . '/Views');
-        $twig = new Environment($loader);
+        // $viewsPath = config('VIEWS_PATH') ?: '/Views';
+        // $loader = new FilesystemLoader(Lalaz::appDirectory() . $viewsPath);
+        // $twig = new Environment($loader);
 
-        static::attachUtilFunctions($twig);
+        // static::attachUtilFunctions($twig);
 
         header('Content-Type: text/html');
         http_response_code($statucCode);
-        echo $twig->render("$view.twig", $data);
+
+        echo TemplateEngine::getEngine()->render("$view.twig", $data);
     }
 
     public static function renderJson(array $data = [], $statusCode = 200): void
@@ -95,23 +95,6 @@ class View
         }
 
         static::render('errors/500', $data, 500);
-    }
-
-    /**
-     * Attaches utility functions to the Twig environment.
-     *
-     * This method adds custom utility functions like flash messages and route URLs
-     * to the Twig environment, allowing them to be used in view templates.
-     *
-     * @param \Twig\Environment $twig The Twig environment to which the functions are attached.
-     *
-     * @return void
-     */
-    public static function attachUtilFunctions(Environment $twig): void
-    {
-        foreach (Utils::all() as $util) {
-            $twig->addFunction($util);
-        }
     }
 
     private static function renderDevelopmentError(Throwable $exception): void
