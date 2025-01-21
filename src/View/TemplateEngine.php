@@ -2,6 +2,7 @@
 
 namespace Lalaz\View;
 
+use Expcetion;
 use Lalaz\View\Contracts\TemplateEngineInterface;
 use Lalaz\View\Providers\TwigTemplateEngine;
 use Lalaz\View\Providers\BladeTemplateEngine;
@@ -16,25 +17,25 @@ class TemplateEngine
             return;
         }
 
-        $engineName = config('TEMPLATE_ENGINE') ?? 'twig';
+        $engineName = config('TEMPLATE_ENGINE');
 
-        switch ($engineName) {
-            case 'twig':
-                if (!class_exists(\Twig\Environment::class)) {
-                    throw new \Exception("Twig não está instalado. Instale com 'composer require twig/twig'.");
-                }
-                self::$engine = new TwigTemplateEngine();
-                break;
-
-            default:
-                throw new \Exception("Engine de template desconhecida: $engineName");
+        if (!$engineName) {
+            throw new Exception('TEMPLATE_ENGINE was not provided.');
         }
+
+        $engineProvider = config('TEMPLATE_PROVIDER');
+
+        if (!$engineProvider) {
+            throw new Exception('TEMPLATE_PROVIDER was not provided.');
+        }
+
+        self::$engine = new $engineProvider();
     }
 
     public static function getEngine(): TemplateEngineInterface
     {
         if (self::$engine === null) {
-            throw new \Exception("TemplateManager não foi inicializado.");
+            throw new Exception("TemplateManager não foi inicializado.");
         }
 
         return self::$engine;
