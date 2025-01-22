@@ -111,6 +111,18 @@ class Config
     }
 
     /**
+     * Sets the value of a specified environment variable.
+     *
+     * @param string $key The name of the environment variable to retrieve.
+     * @param mixed $default The default value to return if the variable is not found (default: null).
+     * @return mixed
+     */
+    public static function set(string $key, mixed $value = null): mixed
+    {
+        return self::$env[$key] = $_ENV[$key] = $value;
+    }
+
+    /**
      * Retrieves a typed environment variable.
      *
      * Retrieves the environment variable as a specific type (string, int, bool, or float).
