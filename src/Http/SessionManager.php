@@ -21,6 +21,8 @@ class SessionManager
      */
     public static function start(): void
     {
+        ini_set('session.gc_maxlifetime', config('SESSION_LIFETIME'));
+
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
