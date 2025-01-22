@@ -17,7 +17,7 @@ trait PasswordHash
     /**
      * A static salt used to enhance password hashing security.
      */
-    private const SALT = 'L@laZ1#2F';
+    private const DEFAULT_SALT = 'L@laZ1#2F';
 
     /**
      * Generates a salted hash of the given plain text password using Argon2ID.
@@ -28,7 +28,7 @@ trait PasswordHash
      */
     public static function generateHash(string $plainText): string
     {
-        $salted = $plainText . self::SALT;
+        $salted = $plainText . config('SECRET_KEY') ?? self::DEFAULT_SALT;
 
         $hashed = password_hash(
             $salted,
@@ -49,7 +49,7 @@ trait PasswordHash
      */
     public static function verifyHash(string $plainText, string $hash): bool
     {
-        $salted = $plainText . self::SALT;
+        $salted = $plainText . config('SECRET_KEY') ?? self::DEFAULT_SALT;
         return password_verify($salted, $hash);
     }
 }
