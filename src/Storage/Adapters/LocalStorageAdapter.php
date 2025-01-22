@@ -80,7 +80,8 @@ class LocalStorageAdapter implements StorageInterface
      */
     public function getPublicUrl(string $path): string
     {
-        return ltrim($this->basePath, '.') . ltrim($path, '/');
+        $basePublicUrl = rtrim(config('STORAGE_PUBLIC_URL'), '/') . '/';
+        return $basePublicUrl . ltrim($path, '/');
     }
 
     /**

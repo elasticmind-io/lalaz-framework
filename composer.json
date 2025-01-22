@@ -17,9 +17,7 @@
         }
     ],
     "require": {
-        "php": "^8.2",
-        "mockery/mockery": "^1.6",
-        "twig/twig": "^3.0"
+        "php": "^8.2"
     },
     "config": {
         "optimize-autoloader": true,
@@ -32,6 +30,7 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require-dev": {
-        "pestphp/pest": "^3.3"
+        "pestphp/pest": "^3.3",
+        "mockery/mockery": "^1.6"
     }
 }

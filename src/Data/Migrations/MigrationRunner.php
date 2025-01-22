@@ -22,7 +22,7 @@ class MigrationRunner
     private static $migrationsTableName = '__migrations';
 
     /** @var string $migrationsFolder The directory where migration files are stored */
-    private static $migrationsFolder = './src/Db/Migrations';
+    private static $migrationsFolder = './src/Database/Migrations';
 
     /**
      * Ensures that the migrations table exists in the database.
@@ -33,11 +33,12 @@ class MigrationRunner
     {
         $tablename = static::$migrationsTableName;
 
-        Lalaz::db()->exec("CREATE TABLE IF NOT EXISTS $tablename (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            migration VARCHAR(255),
-            batch INT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        Lalaz::createStandaloneDbInstance()
+            ->exec("CREATE TABLE IF NOT EXISTS $tablename (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                migration VARCHAR(255),
+                batch INT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=INNODB;");
     }
 
@@ -49,8 +50,10 @@ class MigrationRunner
     private static function getExecutedMigrations(): array
     {
         $tablename = static::$migrationsTableName;
+
         $executed = [];
-        $result = Lalaz::db()->query("SELECT migration FROM $tablename");
+        $result = Lalaz::createStandaloneDbInstance()
+            ->query("SELECT migration FROM $tablename");
 
         while ($row = $result->fetch()) {
             $executed[] = $row['migration'];
@@ -68,7 +71,9 @@ class MigrationRunner
     private static function logMigration(string $migrationClass): void
     {
         $tablename = static::$migrationsTableName;
-        Lalaz::db()->exec("INSERT INTO $tablename (migration, batch) VALUES ('$migrationClass', 1)");
+
+        Lalaz::createStandaloneDbInstance()
+            ->exec("INSERT INTO $tablename (migration, batch) VALUES ('$migrationClass', 1)");
     }
 
     /**
@@ -107,14 +112,19 @@ class MigrationRunner
     public static function rollback(): void
     {
         $tablename = static::$migrationsTableName;
-        $lastBatch = Lalaz::db()->query("SELECT MAX(batch) FROM $tablename")->fetchColumn();
+
+        $lastBatch = Lalaz::createStandaloneDbInstance()
+            ->query("SELECT MAX(batch) FROM $tablename")
+            ->fetchColumn();
 
         if (!$lastBatch) {
             echo "No migrations to rollback.\n";
             return;
         }
 
-        $lastMigration = Lalaz::db()->query("SELECT migration FROM $tablename WHERE batch = $lastBatch ORDER BY id DESC LIMIT 1")->fetch();
+        $lastMigration = Lalaz::createStandaloneDbInstance()
+            ->query("SELECT migration FROM $tablename WHERE batch = $lastBatch ORDER BY id DESC LIMIT 1")
+            ->fetch();
 
         if ($lastMigration) {
             $migrationClassWithTimestamp = $lastMigration['migration'];
@@ -126,7 +136,8 @@ class MigrationRunner
             $migrationInstance = new $migrationClass();
             $migrationInstance->down();
 
-            Lalaz::db()->exec("DELETE FROM $tablename WHERE migration = '$migrationClassWithTimestamp'");
+            Lalaz::createStandaloneDbInstance()
+                ->exec("DELETE FROM $tablename WHERE migration = '$migrationClassWithTimestamp'");
 
             echo "Rolled back: $migrationClassWithTimestamp\n";
         } else {
@@ -142,7 +153,10 @@ class MigrationRunner
     public static function reset(): void
     {
         $tablename = static::$migrationsTableName;
-        $migrations = Lalaz::db()->query("SELECT migration FROM $tablename ORDER BY batch DESC, id DESC")->fetchAll();
+
+        $migrations = Lalaz::createStandaloneDbInstance()
+            ->query("SELECT migration FROM $tablename ORDER BY batch DESC, id DESC")
+            ->fetchAll();
 
         if (empty($migrations)) {
             echo "No migrations to reset.\n";
@@ -159,7 +173,7 @@ class MigrationRunner
             $migrationInstance = new $migrationClass();
             $migrationInstance->down();
 
-            Lalaz::db()->exec("DELETE FROM $tablename WHERE migration = '$migrationClassWithTimestamp'");
+            Lalaz::createStandaloneDbInstance()->exec("DELETE FROM $tablename WHERE migration = '$migrationClassWithTimestamp'");
 
             echo "Rolled back: $migrationClassWithTimestamp\n";
         }

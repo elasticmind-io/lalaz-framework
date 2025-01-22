@@ -45,7 +45,7 @@ class QueueManager
 
             case 'database':
             default:
-                $this->provider = new DatabaseQueueProvider(Lalaz::db());
+                $this->provider = new DatabaseQueueProvider(Lalaz::createStandaloneDbInstance());
         }
     }
 

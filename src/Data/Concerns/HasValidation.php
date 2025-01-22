@@ -223,11 +223,13 @@ trait HasValidation
                         $sql .= " AND $pkName <> :pkValue";
                     }
 
-                    $statement = Lalaz::getInstance()->db->prepare($sql);
+                    $statement = Lalaz::db()->prepare($sql);
                     $statement->bindValue(":$uniqueAttr", $value);
+
                     if ($pkValue > 0) {
                         $statement->bindValue(":pkValue", $pkValue);
                     }
+
                     $statement->execute();
                     $record = $statement->fetchObject();
 
