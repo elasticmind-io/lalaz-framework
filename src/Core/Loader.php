@@ -2,6 +2,7 @@
 
 namespace Lalaz\Core;
 
+use Lalaz\Lalaz;
 use InvalidArgumentException;
 
 /**
@@ -49,11 +50,6 @@ class Loader
         self::loadFiles($functionsDirectory);
     }
 
-    /**
-     * Load all files from the app config directory.
-     *
-     * @return void
-     */
     public static function loadAppConfiguration()
     {
         $path = Lalaz::appDirectory() . '/Config';
