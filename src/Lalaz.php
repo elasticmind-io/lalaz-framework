@@ -12,8 +12,8 @@ use Lalaz\Event\EventHub;
 use Lalaz\Logging\Logger;
 use Lalaz\Logging\LogToConsole;
 use Lalaz\Routing\Router;
-use Lalaz\View\TemplateEngine;
 use Lalaz\View\View;
+use Lalaz\View\TemplateEngine;
 
 /**
  * Class Lalaz
@@ -52,11 +52,11 @@ class Lalaz
      * Loads environment variables, initializes the database, router, and events
      * instances. If already initialized, returns the existing instance.
      *
-     * @param string $rootDir The root directory of the application.
+     * @param string $appDirectory The root directory of the application.
      * @param Logger|null $logger Optional logger instance. If null, a default logger is created.
      * @return Lalaz The initialized Lalaz instance.
      */
-    public static function initialize(string $rootDir, ?Logger $logger = null): Lalaz
+    public static function initialize(string $appDirectory, ?Logger $logger = null): Lalaz
     {
         if (self::$instance !== null) {
             return self::$instance;
@@ -102,8 +102,11 @@ class Lalaz
      * Sets the root directory, logger, database, router, and event manager.
      * It is private to ensure that only one instance (singleton) is created via the initialize method.
      *
-     * @param string $rootDir The root directory of the application.
+     * @param string $appDirectory The root directory of the application.
      * @param Logger|null $logger Optional logger instance.
+     * @param Database|null $db Optional database instance.
+     * @param Router|null $router Optional router instance.
+     * @param EventHub|null $events Optional event hub instance.
      */
     private function __construct(string $appDirectory, ?Logger $logger = null)
     {
@@ -173,6 +176,8 @@ class Lalaz
      */
     private static function configureRoutes(): void
     {
+        debug('Configuring App Routes');
+
         if (function_exists('onRouterInitialized')) {
             onRouterInitialized();
         }
@@ -262,7 +267,7 @@ class Lalaz
      */
     public static function router(): Router
     {
-        return Lalaz::getInstance()->router;
+        return static::getInstance()->router;
     }
 
     /**
@@ -275,6 +280,6 @@ class Lalaz
      */
     public static function logger()
     {
-        return Lalaz::getInstance()->logger;
+        return static::getInstance()->logger;
     }
 }
