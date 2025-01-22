@@ -17,12 +17,6 @@ class TemplateEngine
             return;
         }
 
-        $engineName = config('TEMPLATE_ENGINE');
-
-        if (!$engineName) {
-            throw new Exception('TEMPLATE_ENGINE was not provided.');
-        }
-
         $engineProvider = config('TEMPLATE_PROVIDER');
 
         if (!$engineProvider) {
