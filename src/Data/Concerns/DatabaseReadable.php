@@ -12,6 +12,21 @@ use Lalaz\Data\Query\QueryBuilderInterface;
 trait DatabaseReadable
 {
     /**
+     * Execute raw query using sql
+     *
+     * @param string $sql
+     * @param array $parameters
+     * @return mixed
+     * @throws Exception
+     */
+    public static function executeRawQuery($sql, array $parameters = [])
+    {
+        $statement = static::prepareAndBindParameters($sql, $parameters);
+        $statement->execute();
+        return $statement->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Execute a query and fetch a single record.
      *
      * @param QueryBuilderInterface $builder
