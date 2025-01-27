@@ -76,7 +76,7 @@ trait DatabaseWritable
             $primaryKey = static::primaryKey();
 
             if (is_string($primaryKey) && empty($this->$primaryKey)) {
-                $this->$primaryKey = Lalaz::getInstance()->db->lastInsertId();
+                $this->$primaryKey = Lalaz::db()->lastInsertId();
             }
 
             $this->exists = true;
