@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 use Lalaz\Data\Migrations\Migration;
 use Lalaz\Data\Schema\SchemaBuilder;
