@@ -238,6 +238,7 @@ class Lalaz
         $appDirectory = 'src/App';
         $envfile = "{$appDirectory}/.env";
         Config::load($envfile);
+        Loader::loadCoreFunctions();
         return static::initializeDb();
     }
 
