@@ -42,6 +42,16 @@ class Config
      */
     public static function load(string $envFile, string $delimiter = '=', bool $forceReload = false): void
     {
+        if (!file_exists($envFile)) {
+            self::$env = array_merge($_ENV, $_SERVER);
+
+            foreach (getenv() as $key => $value) {
+                self::$env[$key] = $value;
+            }
+
+            return;
+        }
+        
         if ($forceReload || self::shouldReload($envFile)) {
             if (is_file($envFile)) {
                 $file = new \SplFileObject($envFile);

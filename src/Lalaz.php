@@ -237,13 +237,7 @@ class Lalaz
     {
         $appDirectory = 'src/App';
         $envfile = "{$appDirectory}/.env";
-
-        if (!file_exists($envfile)) {
-            throw new RuntimeException('No .env file found in the expected location');
-        }
-
         Config::load($envfile);
-
         return static::initializeDb();
     }
 
