@@ -187,6 +187,43 @@ class Request extends stdClass
         return new UploadedFile($_FILES[$key]);
     }
 
+    public function ip(): string
+    {
+        $headers = [
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_CF_CONNECTING_IP',
+            'HTTP_X_REAL_IP',
+            'REMOTE_ADDR'
+        ];
+
+        foreach ($headers as $header) {
+            if (!empty($_SERVER[$header])) {
+                $ipList = explode(',', $_SERVER[$header]);
+                return trim($ipList[0]);
+            }
+        }
+
+        return '0.0.0.0';
+    }
+
+    public function userAgent(): string
+    {
+        return $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
+    }
+
+    public function fingerprint(): string
+    {
+        $ip = $this->ip();
+        $userAgent = $this->userAgent();
+
+        $acceptLanguage = $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'unknown';
+        $screenResolution = $_COOKIE['screen_resolution'] ?? 'unknown';
+        $timezone = $_COOKIE['timezone'] ?? 'unknown';
+
+        $fingerprintData = $ip . $userAgent . $acceptLanguage . $screenResolution . $timezone;
+        return hash('sha256', $fingerprintData);
+    }
+
     /**
      * Check if the request expects a JSON response.
      *
