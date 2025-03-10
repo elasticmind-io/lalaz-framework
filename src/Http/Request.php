@@ -215,12 +215,12 @@ class Request extends stdClass
      */
     private function initializeBody(): void
     {
-        if (!empty($_POST)) {
-            $this->body = $this->sanitize($_POST);
+        if (static::isJsonRequest()) {
+            $this->body = json_decode(file_get_contents('php://input'));
             return;
         }
 
-        $this->body = $this->sanitize(json_decode(file_get_contents('php://input')));
+        $this->body = $this->sanitize($_POST);
     }
 
     /**
