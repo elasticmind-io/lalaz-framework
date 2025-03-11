@@ -172,7 +172,7 @@ class GeneratorEngine
         $className = ucwords($name);
 
         $timestamp = date('Ymd_His');
-        $filename = "./src/Db/Migrations/{$timestamp}_{$className}.php";
+        $filename = "./src/Database/Migrations/{$timestamp}_{$className}.php";
 
         $engine = new GeneratorEngine(
             'migration.tpl',
@@ -358,7 +358,7 @@ class GeneratorEngine
      * Generates a seeder file based on the given name.
      *
      * This method creates a new seeder file using a template. The generated seeder is placed
-     * in the `src/Db/Seeders/` directory with a name based on the provided input.
+     * in the `src/Database/Seeders/` directory with a name based on the provided input.
      *
      * @param string $name The name of the seeder to generate. The name can include nested paths
      *                     to create a structured directory for the seeder.
@@ -368,7 +368,7 @@ class GeneratorEngine
     {
         $parsed = self::parseNameAndNamespace($name);
 
-        $outputFilePath = './src/Db/Seeders/'
+        $outputFilePath = './src/Database/Seeders/'
             . $parsed['directory'] . $parsed['className']
             . 'Seed.php';
 
