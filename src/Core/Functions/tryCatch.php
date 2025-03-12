@@ -47,7 +47,9 @@ if (!function_exists('tryCatch'))
             }
 
             if ($logExceptions) {
-                Log::error('Exception caught in tryCatch: ' . $e->getMessage(), ['exception' => $e]);
+                Log::error("🛑 Error: " . $e->getMessage());
+                Log::error("📍 File: " . $e->getFile() . " (Line " . $e->getLine() . ")");
+                Log::error("🔎 Stack trace:\n" . $e->getTraceAsString());
             }
 
             if ($rethrow) throw $e;
