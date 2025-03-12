@@ -136,7 +136,8 @@ class Lalaz
 
         if ($error) {
             View::renderError([], $error);
-            Lalaz::logger()->error($error);
+            $rawError = json_encode($error);
+            Lalaz::logger()->error($rawError);
         }
 
         ob_end_flush();
