@@ -31,18 +31,16 @@ class View
      *
      * @return void
      */
-    public static function render(string $view, array $data = [], $statucCode = 200): void
+    public static function render(string $view, array $data = [], bool $resetContext = true): string
     {
-        // $viewsPath = config('VIEWS_PATH') ?: '/Views';
-        // $loader = new FilesystemLoader(Lalaz::appDirectory() . $viewsPath);
-        // $twig = new Environment($loader);
+        $merged = array_merge($data, ViewContext::resolved());
+        $output = TemplateEngine::getEngine()->render("$view.twig", $merged);
 
-        // static::attachUtilFunctions($twig);
+        if ($resetContext) {
+            ViewContext::reset();
+        }
 
-        header('Content-Type: text/html');
-        http_response_code($statucCode);
-
-        echo TemplateEngine::getEngine()->render("$view.twig", $data);
+        return $output;
     }
 
     public static function renderJson(array $data = [], $statusCode = 200): void
