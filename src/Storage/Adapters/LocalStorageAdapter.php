@@ -29,7 +29,7 @@ class LocalStorageAdapter implements StorageInterface
      */
     public function __construct($config = array())
     {
-        if (array_key_exists($config, 'path')) {
+        if (!array_key_exists('path', $config)) {
             throw new Exception('STORAGE_CONFIG path was not provided.');
         }
 
@@ -104,8 +104,8 @@ class LocalStorageAdapter implements StorageInterface
             : '';
 
         $extension = isset($pathInfo['extension']) ? '.' . $pathInfo['extension'] : '';
-        $uniqueName = uniqid('', true);
+        $uniqueName = str_replace('.', 'ts', uniqid('', true));
 
-        return $subPath . $uniqueName . $extension;
+        return "{$subPath}${uniqueName}{$extension}";
     }
 }
