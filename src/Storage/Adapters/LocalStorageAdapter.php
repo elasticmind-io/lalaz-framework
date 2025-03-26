@@ -2,6 +2,7 @@
 
 namespace Lalaz\Storage\Adapters;
 
+use Exception;
 use Lalaz\IO\Directory;
 use Lalaz\Storage\Contracts\StorageInterface;
 
@@ -26,9 +27,13 @@ class LocalStorageAdapter implements StorageInterface
      *
      * @param string $basePath The base path for storing files.
      */
-    public function __construct(string $basePath)
+    public function __construct($config = array())
     {
-        $this->basePath = rtrim($basePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        if (array_key_exists($config, 'path')) {
+            throw new Exception('STORAGE_CONFIG path was not provided.');
+        }
+
+        $this->basePath = rtrim($config['path'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
     }
 
     /**

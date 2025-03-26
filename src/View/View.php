@@ -7,6 +7,7 @@ use Lalaz\Lalaz;
 use Lalaz\Core\Config;
 use Lalaz\Http\Request;
 use Lalaz\Http\FlashMessage;
+use Lalaz\View\ViewContext;
 
 /**
  * Class View
@@ -34,7 +35,7 @@ class View
     public static function render(string $view, array $data = [], bool $resetContext = true): string
     {
         $merged = array_merge($data, ViewContext::resolved());
-        $output = TemplateEngine::getEngine()->render("$view.twig", $merged);
+        $output = TemplateEngine::getEngine()->render($view, $merged);
 
         if ($resetContext) {
             ViewContext::reset();

@@ -41,17 +41,7 @@ class StorageManager
      */
     public function __construct()
     {
-        $driver = Config::get('STORAGE_DRIVER') ?: 'local';
-
-        switch ($driver) {
-            case 's3':
-                break;
-
-            case 'local':
-            default:
-                $path = Config::get('STORAGE_PATH') ?: './public/static';
-                $this->storage = new LocalStorageAdapter($path);
-                break;
-        }
+        $driver = config('STORAGE_DRIVER') ?: LocalStorageAdapter::class;
+        $this->storage = new $driver(config('STORAGE_CONFIG'));
     }
 }

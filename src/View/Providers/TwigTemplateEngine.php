@@ -2,10 +2,9 @@
 
 namespace Lalaz\View\Providers;
 
+use Lalaz\Lalaz;
 use Lalaz\View\Utils;
 use Lalaz\View\Contracts\TemplateEngineInterface;
-
-use Lalaz\Lalaz;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 
@@ -26,7 +25,7 @@ class TwigTemplateEngine implements TemplateEngineInterface
 
     public function render(string $template, array $data = []): string
     {
-        return $this->twig->render($template, $data);
+        return $this->twig->render("$template.twig", $data);
     }
 
     /**
