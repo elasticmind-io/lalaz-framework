@@ -4,6 +4,7 @@ namespace Lalaz\Http;
 
 use stdClass;
 use Lalaz\View\View;
+use Lalaz\View\ViewContext;
 
 /**
  * Class Response
@@ -23,9 +24,6 @@ class Response extends stdClass
     /** @var array $session Stores the session data */
     private $session;
 
-    /** @var array $viewBag Stores additional data for view rendering */
-    private $viewBag = array();
-
     /**
      * Constructor for the Response class.
      * Initializes the session.
@@ -36,15 +34,21 @@ class Response extends stdClass
     }
 
     /**
-     * Adds data to the view bag, which will be available when rendering views.
+     * Registers a variable to be available in the view context.
      *
-     * @param string $name The name of the data to add.
-     * @param mixed $value The value of the data.
-     * @return Response The current Response instance for method chaining.
+     * The value can be a direct value or a lazy-loading closure. The variable will
+     * be available in all rendered views during the current request.
+     *
+     * Example:
+     * $res->addViewData('user', fn () => Auth::user());
+     *
+     * @param string $key   The variable name to be available in the view.
+     * @param mixed  $value A direct value or a Closure for lazy evaluation.
+     * @return self
      */
-    public function addViewBag(string $name, mixed $value): Response
+    public function addViewData(string $key, mixed $value): self
     {
-        $this->viewBag[$name] = $value;
+        ViewContext::set($key, $value);
         return $this;
     }
 
@@ -170,19 +174,19 @@ class Response extends stdClass
      * @param array $params The parameters to pass to the view.
      * @return void
      */
-    public function render(string $view, $params = [], $statusCode = 200): void
+    public function render(string $view, array $params = [], int $statusCode = 200, bool $resetContext = true): void
     {
         $csrfToken = static::generateCsrfToken();
         $this->addSession('csrfToken', $csrfToken);
 
         $data = [
             ...$params,
-            'viewBag' => $this->viewBag,
             'csrfToken' => $csrfToken
         ];
 
+        header('Content-Type: text/html');
         http_response_code($statusCode);
-        View::render($view, $data);
+        echo View::render($view, $data, $resetContext);
     }
 
     /**
