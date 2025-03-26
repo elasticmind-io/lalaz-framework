@@ -50,7 +50,7 @@ class Blueprint
      */
     public function increments(string $column): self
     {
-        $this->columns[] = "$column INT AUTO_INCREMENT PRIMARY KEY";
+        $this->columns[] = "$column BIGINT AUTO_INCREMENT PRIMARY KEY";
         return $this;
     }
 
