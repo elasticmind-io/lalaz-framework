@@ -4,9 +4,9 @@ namespace Lalaz\Queue;
 
 use Lalaz\Lalaz;
 use Lalaz\Core\Config;
-use Lalaz\Data\Database;
 use Lalaz\Queue\Contracts\QueueProviderInterface;
 use Lalaz\Queue\Providers\DatabaseQueueProvider;
+use Lalaz\Queue\Providers\InMemoryQueueProvider;
 use Lalaz\Queue\Providers\FileQueueProvider;
 
 /**
@@ -39,6 +39,10 @@ class QueueManager
         $providerType = Config::get('QUEUE_PROVIDER') ?: 'database';
 
         switch ($providerType) {
+            case 'in-memory':
+                $this->provider = new InMemoryQueueProvider();
+                break;
+
             case 'file':
                 $this->provider = new FileQueueProvider();
                 break;
