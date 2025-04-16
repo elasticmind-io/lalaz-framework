@@ -24,9 +24,18 @@ class ConnectionAdaterResolver
      */
     public static function resolve(): ConnectionAdapterInterface
     {
-        $provider = Config::get('DB_PROVIDER', 'mysql');
+        $provider = Config::get('DB_PROVIDER', 'sqlite');
 
         switch (strtolower($provider)) {
+            case 'sqlite':
+                $path = Config::get('SQLITE_PATH');
+
+                if (!$path) {
+                    throw new RuntimeException('SQLITE_PATH is required when DB_PROVIDER=sqlite');
+                }
+
+                return new SQLiteAdapter(['path' => $path]);
+
             case 'mysql':
                 $host       = Config::get('DB_HOST');
                 $port       = Config::get('DB_PORT');
