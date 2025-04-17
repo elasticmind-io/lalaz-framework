@@ -2,14 +2,15 @@
 
 namespace Lalaz\Data;
 
-use PDO;
+use Lalaz\Data\Adapters\ConnectionAdapterInterface;
+use PDOStatement;
 
 /**
  * Class Database
  *
- * This class provides a simple abstraction over PHP's PDO class, enabling database interactions
- * such as preparing statements, executing queries, and handling exceptions. It encapsulates the PDO instance
- * and offers convenient methods for common database operations.
+ * This class provides a generic abstraction layer for database operations, delegating all behavior
+ * to a configurable adapter. This enables Lalaz to operate in both traditional (e.g. MySQL) and
+ * DB-less environments, without modifying the application logic.
  *
  * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
@@ -17,106 +18,118 @@ use PDO;
  */
 class Database
 {
-    /** @var PDO $pdo The PDO instance used for database operations */
-    private PDO $pdo;
+    /**
+     * The underlying database connection adapter.
+     *
+     * @var ConnectionAdapterInterface
+     */
+    private ConnectionAdapterInterface $adapter;
 
     /**
      * Constructor for the Database class.
      *
-     * Initializes the PDO instance with the provided database configuration.
+     * Initializes the adapter used to manage database operations.
      *
-     * @param array $dbConfig An array containing database configuration with keys 'dsn', 'user', and 'password'.
+     * @param ConnectionAdapterInterface $adapter An implementation of the connection adapter.
      */
-    public function __construct($dbConfig = [])
+    public function __construct(ConnectionAdapterInterface $adapter)
     {
-        $dbDsn = $dbConfig['dsn'] ?? '';
-        $username = $dbConfig['user'] ?? '';
-        $password = $dbConfig['password'] ?? '';
-
-        $this->pdo = new PDO($dbDsn, $username, $password);
-        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->adapter = $adapter;
+        $this->adapter->connect();
     }
 
     /**
-     * Begin a new database transaction.
+     * Begins a new database transaction.
      *
      * @return bool True on success, false on failure.
      */
     public function beginTransaction(): bool
     {
-        return $this->pdo->beginTransaction();
+        return $this->adapter->beginTransaction();
     }
 
     /**
-     * Commit the current database transaction.
+     * Commits the current database transaction.
      *
      * @return bool True on success, false on failure.
      */
     public function commit(): bool
     {
-        return $this->pdo->commit();
+        return $this->adapter->commit();
     }
 
     /**
-     * Roll back the current database transaction.
+     * Rolls back the current database transaction.
      *
      * @return bool True on success, false on failure.
      */
     public function rollBack(): bool
     {
-        return $this->pdo->rollBack();
+        return $this->adapter->rollBack();
     }
 
     /**
      * Prepares an SQL statement for execution.
      *
      * @param string $query The SQL query to prepare.
-     * @return \PDOStatement The prepared statement.
+     * @return PDOStatement The prepared statement.
      */
-    public function prepare($query): \PDOStatement
+    public function prepare(string $query): PDOStatement
     {
-        return $this->pdo->prepare($query);
+        return $this->adapter->prepare($query);
     }
 
     /**
-     * Executes an SQL query and returns the result.
+     * Executes a SQL query and returns the result set.
      *
-     * @param string $query The SQL query to execute.
-     * @return mixed The result set as a PDOStatement, or false on failure.
+     * @param string $query    The SQL query to execute.
+     * @param array  $bindings Optional query bindings.
+     * @return mixed The result set or false on failure.
      */
-    public function query($query): mixed
+    public function query(string $query, array $bindings = []): mixed
     {
-        return $this->pdo->query($query);
+        return $this->adapter->query($query, $bindings);
     }
 
     /**
-     * Executes an SQL statement and returns the number of affected rows.
+     * Executes a SQL statement without returning a result set.
      *
-     * @param string $query The SQL statement to execute.
+     * @param string $query    The SQL statement to execute.
+     * @param array  $bindings Optional bindings for the SQL statement.
      * @return void
      */
-    public function exec($query): void
+    public function exec(string $query, array $bindings = []): void
     {
-        $this->pdo->exec($query);
+        $this->adapter->exec($query, $bindings);
     }
 
     /**
-     * Return the last insert id into the database.
+     * Returns the last inserted ID for an auto-increment column.
      *
-     * @return string
+     * @return string The last insert ID.
      */
     public function lastInsertId(): string
     {
-        return $this->pdo->lastInsertId();
+        return $this->adapter->lastInsertId();
     }
 
     /**
-     * Logs a message with a timestamp.
+     * Checks whether the adapter is connected to a database.
+     *
+     * @return bool True if connected, false otherwise.
+     */
+    public function isConnected(): bool
+    {
+        return $this->adapter->isConnected();
+    }
+
+    /**
+     * Logs a debug message with timestamp to STDOUT.
      *
      * @param string $message The message to log.
      * @return void
      */
-    private function log($message)
+    private function log(string $message): void
     {
         echo "[" . date("Y-m-d H:i:s") . "] - " . $message . PHP_EOL;
     }

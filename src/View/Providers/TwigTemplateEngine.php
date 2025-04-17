@@ -62,11 +62,13 @@ class TwigTemplateEngine implements TemplateEngineInterface
     {
         $extensionFiles = config('VIEW_EXTENSIONS', []);
 
-        foreach ($extensionFiles as $file) {
-            if (file_exists($file)) {
-                $callback = require $file;
-                if (is_callable($callback)) {
-                    $callback($this->twig);
+        if ($extensionFiles) {
+            foreach ($extensionFiles as $file) {
+                if (file_exists($file)) {
+                    $callback = require $file;
+                    if (is_callable($callback)) {
+                        $callback($this->twig);
+                    }
                 }
             }
         }

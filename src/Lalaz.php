@@ -8,6 +8,7 @@ use \RuntimeException;
 use Lalaz\Core\Loader;
 use Lalaz\Core\Config;
 use Lalaz\Data\Database;
+use Lalaz\Data\Adapters\ConnectionAdaterResolver;
 use Lalaz\Event\EventHub;
 use Lalaz\Logging\Logger;
 use Lalaz\Logging\LogToConsole;
@@ -194,29 +195,9 @@ class Lalaz
      */
     private static function initializeDb(): Database
     {
-        debug('Initializing App Database');
-
-        $dsn = Config::get('DB_DSN');
-        $user = Config::get('DB_USER');
-        $password = Config::get('DB_PASSWORD');
-
-        if (!$dsn) {
-            throw new RuntimeException('Database configuration variable DB_DSN is missing.');
-        }
-
-        if (!$user) {
-            throw new RuntimeException('Database configuration variable DB_USER is missing.');
-        }
-
-        if (!$password) {
-            throw new RuntimeException('Database configuration variable DB_PASSWORD is missing.');
-        }
-
-        return new Database([
-            'dsn' => $dsn,
-            'user' => $user,
-            'password' => $password,
-        ]);
+        debug('Resolving database adapter...');
+        $adapter = ConnectionAdaterResolver::resolve();
+        return new Database($adapter);
     }
 
     public static function appDirectory(): string
