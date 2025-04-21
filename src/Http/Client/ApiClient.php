@@ -2,139 +2,214 @@
 
 namespace Lalaz\Http\Client;
 
+use Psr\Log\LoggerInterface;
+use Lalaz\Http\Client\Transport\CurlTransport;
+use Lalaz\Http\Client\Transport\HttpTransportInterface;
+
 /**
  * Class ApiClient
  *
  * This class provides functionality to make RESTful HTTP requests
- * and returns an ApiResponse that contains the status code and body of the request.
+ * and returns a structured ApiResponse object.
  *
  * @package elasticmind\lalaz-framework
- * @author  Elasticmind <ola@elasticmind.io>
- * @link    https://lalaz.dev
  */
 class ApiClient
 {
     /**
-     * Base URL for the API requests.
-     *
-     * @var string
+     * @var string The base URL for the API requests.
      */
     private string $baseUrl;
 
     /**
-     * Constructor for the ApiClient.
-     *
-     * @param string $baseUrl The base URL for the API requests.
+     * @var HttpTransportInterface The HTTP transport implementation.
      */
-    public function __construct(string $baseUrl)
-    {
-        $this->baseUrl = rtrim($baseUrl, '/');
-    }
+    private HttpTransportInterface $transport;
 
     /**
-     * Performs a GET request with optional query parameters and headers.
-     *
-     * @param string $endpoint The API endpoint.
-     * @param array $queryParams Optional query parameters to include in the request.
-     * @param array $headers Optional headers to include in the request.
-     * @return ApiResponse The API response containing the status code and body.
+     * @var array Configuration options such as timeout, headers, and SSL settings.
      */
-    public function get(string $endpoint, array $queryParams = [], array $headers = []): ApiResponse
-    {
-        $url = $this->baseUrl . '/' . ltrim($endpoint, '/');
+    private array $options;
 
-        if (!empty($queryParams)) {
-            $url .= '?' . http_build_query($queryParams);
+    /**
+     * @var LoggerInterface|null Optional logger instance.
+     */
+    private ?LoggerInterface $logger;
+
+    /**
+     * ApiClient constructor.
+     *
+     * Supports multiple forms:
+     * - new ApiClient('https://api')
+     * - new ApiClient('https://api', ['skipSsl' => true])
+     * - new ApiClient('https://api', new CurlTransport())
+     * - new ApiClient('https://api', new CurlTransport(), ['timeout' => 5])
+     *
+     * @param string $baseUrl
+     * @param HttpTransportInterface|array|null $secondParam
+     * @param array $options
+     * @param LoggerInterface|null $logger
+     */
+    public function __construct(
+        string $baseUrl,
+        HttpTransportInterface|array|null $secondParam = null,
+        array $options = [],
+        ?LoggerInterface $logger = null
+    ) {
+        $this->baseUrl = rtrim($baseUrl, '/');
+
+        if ($secondParam instanceof HttpTransportInterface) {
+            $this->transport = $secondParam;
+        } else {
+            $this->transport = new CurlTransport();
+            $options = $secondParam ?? [];
         }
 
-        return $this->sendRequest('GET', $url, null, $headers);
+        $this->logger = $logger;
+
+        $this->options = array_merge([
+            'baseHeaders'    => [],
+            'timeout'        => 10,
+            'connectTimeout' => 5,
+            'skipSsl'        => false,
+            'retries'        => 0,
+            'retryDelayMs'   => 500,
+        ], $options);
     }
 
     /**
-     * Performs a POST request with an optional JSON payload and headers.
+     * Executes a custom HTTP request and returns the response.
      *
-     * @param string $endpoint The API endpoint.
-     * @param array $data Optional JSON payload to include in the request.
-     * @param array $headers Optional headers to include in the request.
-     * @return ApiResponse The API response containing the status code and body.
+     * @param string $method
+     * @param string $endpoint
+     * @param array $options
+     * @return ApiResponse
+     * @throws ApiClientException
+     */
+    public function request(string $method, string $endpoint, array $options = []): ApiResponse
+    {
+        $url = $this->baseUrl . '/' . ltrim($endpoint, '/');
+        $mergedHeaders = array_merge($this->options['baseHeaders'], $options['headers'] ?? []);
+        $attempts = 0;
+
+        do {
+            try {
+                $this->logger?->info('[API] Sending request', [
+                    'method'  => $method,
+                    'url'     => $url,
+                    'headers' => $mergedHeaders,
+                ]);
+
+                $result = $this->transport->send([
+                    'method'         => $method,
+                    'url'            => $url,
+                    'headers'        => $mergedHeaders,
+                    'body'           => $options['body'] ?? null,
+                    'timeout'        => $this->options['timeout'],
+                    'connectTimeout' => $this->options['connectTimeout'],
+                    'skipSsl'        => $this->options['skipSsl'],
+                ]);
+
+                return new ApiResponse(
+                    $result['status'],
+                    $this->decodeBody($result['body'])
+                );
+            } catch (ApiClientException $e) {
+                $this->logger?->error('[API] Request failed', [
+                    'message' => $e->getMessage(),
+                    'attempt' => $attempts + 1,
+                ]);
+
+                if (++$attempts > $this->options['retries']) {
+                    throw $e;
+                }
+
+                usleep($this->options['retryDelayMs'] * 1000);
+            }
+        } while (true);
+    }
+
+    /**
+     * Executes a GET request.
+     *
+     * @param string $endpoint
+     * @param array $headers
+     * @return ApiResponse
+     */
+    public function get(string $endpoint, array $headers = []): ApiResponse
+    {
+        return $this->request('GET', $endpoint, ['headers' => $headers]);
+    }
+
+    /**
+     * Executes a POST request with JSON payload.
+     *
+     * @param string $endpoint
+     * @param array $data
+     * @param array $headers
+     * @return ApiResponse
      */
     public function post(string $endpoint, array $data = [], array $headers = []): ApiResponse
     {
-        $url = $this->baseUrl . '/' . ltrim($endpoint, '/');
-        $jsonData = json_encode($data);
-
-        return $this->sendRequest('POST', $url, $jsonData, $headers);
+        return $this->request('POST', $endpoint, [
+            'body' => json_encode($data),
+            'headers' => $headers,
+        ]);
     }
 
     /**
-     * Performs a PUT request with an optional JSON payload and headers.
+     * Executes a PUT request with JSON payload.
      *
-     * @param string $endpoint The API endpoint.
-     * @param array $data Optional JSON payload to include in the request.
-     * @param array $headers Optional headers to include in the request.
-     * @return ApiResponse The API response containing the status code and body.
+     * @param string $endpoint
+     * @param array $data
+     * @param array $headers
+     * @return ApiResponse
      */
     public function put(string $endpoint, array $data = [], array $headers = []): ApiResponse
     {
-        $url = $this->baseUrl . '/' . ltrim($endpoint, '/');
-        $jsonData = json_encode($data);
-
-        return $this->sendRequest('PUT', $url, $jsonData, $headers);
+        return $this->request('PUT', $endpoint, [
+            'body' => json_encode($data),
+            'headers' => $headers,
+        ]);
     }
 
     /**
-     * Performs a DELETE request with optional headers.
+     * Executes a PATCH request with JSON payload.
      *
-     * @param string $endpoint The API endpoint.
-     * @param array $headers Optional headers to include in the request.
-     * @return ApiResponse The API response containing the status code and body.
+     * @param string $endpoint
+     * @param array $data
+     * @param array $headers
+     * @return ApiResponse
+     */
+    public function patch(string $endpoint, array $data = [], array $headers = []): ApiResponse
+    {
+        return $this->request('PATCH', $endpoint, [
+            'body' => json_encode($data),
+            'headers' => $headers,
+        ]);
+    }
+
+    /**
+     * Executes a DELETE request.
+     *
+     * @param string $endpoint
+     * @param array $headers
+     * @return ApiResponse
      */
     public function delete(string $endpoint, array $headers = []): ApiResponse
     {
-        $url = $this->baseUrl . '/' . ltrim($endpoint, '/');
-
-        return $this->sendRequest('DELETE', $url, null, $headers);
+        return $this->request('DELETE', $endpoint, ['headers' => $headers]);
     }
 
     /**
-     * Sends the HTTP request using cURL and returns an ApiResponse.
+     * Decodes the response body if JSON; otherwise returns the raw string.
      *
-     * @param string $method The HTTP method (GET, POST, PUT, DELETE, etc.).
-     * @param string $url The full URL for the request.
-     * @param string|null $data Optional JSON payload for POST/PUT requests.
-     * @param array $headers Optional headers to include in the request.
-     * @return ApiResponse The API response containing the status code and body.
+     * @param string $raw
+     * @return mixed
      */
-    private function sendRequest(string $method, string $url, ?string $data = null, array $headers = []): ApiResponse
+    private function decodeBody(string $raw): mixed
     {
-        $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-
-        if ($data !== null) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-            $headers[] = 'Content-Type: application/json';
-            $headers[] = 'Content-Length: ' . strlen($data);
-        }
-
-        if (!empty($headers)) {
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        }
-
-        $response = curl_exec($ch);
-
-        if ($response === false) {
-            $body = ['error' => curl_error($ch)];
-            $statusCode = 500;
-        } else {
-            $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $body = json_decode($response, true) ?: $response;
-        }
-
-        curl_close($ch);
-
-        return new ApiResponse($statusCode, $body);
+        $json = json_decode($raw, true);
+        return json_last_error() === JSON_ERROR_NONE ? $json : $raw;
     }
 }
