@@ -47,7 +47,7 @@ class MysqlAdapter implements ConnectionAdapterInterface
     {
         $stmt = $this->prepare($sql);
         $stmt->execute($bindings);
-        return $stmt->fetchAll();
+        return $stmt;
     }
 
     public function exec(string $sql, array $bindings = []): void
