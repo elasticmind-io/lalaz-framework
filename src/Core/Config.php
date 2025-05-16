@@ -129,7 +129,11 @@ class Config
      */
     public static function set(string $key, mixed $value = null): mixed
     {
-        return self::$env[$key] = $_ENV[$key] = $value;
+        if (!isset($_ENV[$key])) {
+            return self::$env[$key] = $_ENV[$key] = $value;
+        }
+
+        return self::$env[$key] = $_ENV[$key];
     }
 
     /**
