@@ -17,15 +17,26 @@ class GroupDefinition
     }
 
     /**
-     * Sets middlewares for all routes within the group.
+     * Sets middleware for all routes within the group.
      *
-     * @param array $middlewares An array of middleware class names.
-     * @return void
+     * @param array $middleware middleware class names.
+     * @return $this
      */
     public function middleware($middleware): GroupDefinition
     {
+        return $this->middlewares([$middleware]);
+    }
+
+    /**
+     * Sets middlewares for all routes within the group.
+     *
+     * @param array $middlewares An array of middleware class names.
+     * @return $this
+     */
+    public function middlewares($middlewares = array()): GroupDefinition
+    {
         foreach ($this->routes as $route) {
-            $route->middlewares([$middleware]);
+            $route->middlewares($middlewares);
         }
 
         return $this;
