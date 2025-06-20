@@ -250,7 +250,7 @@ abstract class ActiveRecord extends Model
      */
     public static function beginTransaction(): void
     {
-        Lalaz::getInstance()->db->beginTransaction();
+        Lalaz::getInstance()->db()->beginTransaction();
     }
 
     /**
@@ -270,7 +270,7 @@ abstract class ActiveRecord extends Model
      */
     public static function rollBack(): void
     {
-        Lalaz::getInstance()->db->rollBack();
+        Lalaz::getInstance()->db()->rollBack();
     }
 
     /**
@@ -282,7 +282,7 @@ abstract class ActiveRecord extends Model
      */
     public static function transaction(callable $callback)
     {
-        $db = Lalaz::getInstance()->db;
+        $db = Lalaz::getInstance()->db();
 
         try {
             $db->beginTransaction();
