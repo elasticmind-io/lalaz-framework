@@ -44,16 +44,6 @@ class View
         return $output;
     }
 
-    public static function renderJson(array $data = [], $statusCode = 200): void
-    {
-        http_response_code($statusCode);
-        header('Content-Type: application/json');
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'An unexpected error occurred. Please try again later.'
-        ]);
-    }
-
     /**
      * Renders a 404 "Not Found" error page.
      *
@@ -63,7 +53,8 @@ class View
      */
     public static function renderNotFound(array $data = []): void
     {
-        static::render('errors/404', $data, 404);
+        http_response_code(404);
+        echo static::render('errors/404', $data);
     }
 
     /**
@@ -93,7 +84,8 @@ class View
             return;
         }
 
-        static::render('errors/500', $data, 500);
+        http_response_code(500);
+        echo static::render('errors/500', $data, 500);
     }
 
     private static function renderDevelopmentError(Throwable $exception): void
