@@ -45,6 +45,20 @@ class View
     }
 
     /**
+     * Sends a JSON response with the provided data.
+     *
+     * @param array $data The data to send as JSON.
+     * @param int $statusCode The HTTP status code of the response.
+     * @return void
+     */
+    public function renderJson($data = [], $statusCode = 200): void
+    {
+        header('Content-Type: application/json');
+        http_response_code($statusCode);
+        echo json_encode($data);
+    }
+
+    /**
      * Renders a 404 "Not Found" error page.
      *
      * @param array $data An associative array of data to pass to the 404 error view.
@@ -64,7 +78,7 @@ class View
      *
      * @return void
      */
-    public static function renderError(array $data = [], Throwable $exception = null): void
+    public static function renderError(array $data = [], ?Throwable $exception = null): void
     {
         if (ob_get_length()) {
             ob_clean();
@@ -85,7 +99,7 @@ class View
         }
 
         http_response_code(500);
-        echo static::render('errors/500', $data, 500);
+        echo static::render('errors/500', $data);
     }
 
     private static function renderDevelopmentError(Throwable $exception): void
