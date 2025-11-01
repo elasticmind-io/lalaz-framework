@@ -5,6 +5,7 @@ namespace Lalaz\Data\Schema;
 use Lalaz\Lalaz;
 use Lalaz\Data\Schema\Grammars\MySqlGrammar;
 use Lalaz\Data\Schema\Grammars\SQLiteGrammar;
+use Lalaz\Data\Schema\Grammars\PostgresGrammar;
 
 /**
  * Class SchemaBuilder
@@ -62,6 +63,7 @@ class SchemaBuilder
         return match($driver) {
             'mysql' => new MySqlGrammar(),
             'sqlite' => new SQLiteGrammar(),
+            'pgsql' => new PostgresGrammar(),
             default => throw new \RuntimeException("Unsupported database driver: {$driver}")
         };
     }
@@ -70,7 +72,7 @@ class SchemaBuilder
      * Detects the database driver from the adapter instance.
      *
      * @param mixed $adapter The database adapter instance
-     * @return string The driver name (mysql, sqlite, etc.)
+     * @return string The driver name (mysql, sqlite, pgsql, etc.)
      */
     private static function detectDriver($adapter): string
     {
@@ -83,6 +85,10 @@ class SchemaBuilder
 
         if (str_contains($adapterClass, 'SQLiteAdapter')) {
             return 'sqlite';
+        }
+
+        if (str_contains($adapterClass, 'PostgresAdapter')) {
+            return 'pgsql';
         }
 
         // Fallback: check PDO driver if adapter has PDO connection
