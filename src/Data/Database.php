@@ -124,6 +124,16 @@ class Database
     }
 
     /**
+     * Returns the underlying connection adapter.
+     *
+     * @return ConnectionAdapterInterface The connection adapter instance.
+     */
+    public function getAdapter(): ConnectionAdapterInterface
+    {
+        return $this->adapter;
+    }
+
+    /**
      * Logs a debug message with timestamp to STDOUT.
      *
      * @param string $message The message to log.
