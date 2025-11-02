@@ -4,6 +4,7 @@ namespace Lalaz\Http;
 
 use stdClass;
 use Lalaz\Exceptions\HttpException;
+use Lalaz\Security\CsrfProtection;
 
 /**
  * Class Request
@@ -154,7 +155,8 @@ class Request extends stdClass
     /**
      * Validates the CSRF token for POST, PUT, and PATCH requests.
      *
-     * If the token in the body does not match the session token, throws an exception.
+     * Uses HttpOnly cookie-based CSRF protection with token rotation.
+     * If the token in the body/header does not match the cookie token, throws an exception.
      *
      * @return void
      * @throws HttpException
@@ -165,12 +167,51 @@ class Request extends stdClass
             return;
         }
 
-        if ($this->body()['csrfToken'] !== $this->session('csrfToken')) {
+        $headers = $this->getHeaders();
+
+        if (!CsrfProtection::validateToken($this->body(), $headers)) {
             throw HttpException::csrfMismatch('Invalid CSRF token', [
                 'ip' => $this->ip(),
                 'user_agent' => $this->userAgent(),
             ]);
         }
+
+        // Rotate token after successful validation on state-changing operations
+        CsrfProtection::rotateToken();
+    }
+
+    /**
+     * Gets the CSRF token for the current request.
+     * Generates one if it doesn't exist.
+     *
+     * @return string The CSRF token
+     */
+    public function csrfToken(): string
+    {
+        return CsrfProtection::getToken();
+    }
+
+    /**
+     * Gets request headers.
+     *
+     * @return array The request headers
+     */
+    private function getHeaders(): array
+    {
+        if ($this->headers !== null) {
+            return $this->headers;
+        }
+
+        $headers = [];
+        foreach ($_SERVER as $key => $value) {
+            if (strpos($key, 'HTTP_') === 0) {
+                $headerName = str_replace('_', '-', substr($key, 5));
+                $headers[$headerName] = $value;
+            }
+        }
+
+        $this->headers = $headers;
+        return $headers;
     }
 
     /**

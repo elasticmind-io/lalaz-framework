@@ -4,6 +4,7 @@ namespace Lalaz\View;
 
 use Lalaz\Lalaz;
 use Lalaz\Http\FlashMessage;
+use Lalaz\Security\CsrfProtection;
 use Twig\Loader\FilesystemLoader;
 use Twig\Environment;
 use Twig\TwigFunction;
@@ -127,7 +128,35 @@ class Utils
             static::flashMessage(),
             static::routeUrl(),
             static::conditional(),
-            static::renderIf()
+            static::renderIf(),
+            static::csrfToken(),
+            static::csrfField()
         );
+    }
+
+    /**
+     * Registers a Twig function for getting the CSRF token.
+     *
+     * @return \Twig\TwigFunction A Twig function 'csrfToken' that returns the CSRF token.
+     */
+    public static function csrfToken(): TwigFunction
+    {
+        return new TwigFunction('csrfToken', function() {
+            return CsrfProtection::getToken();
+        });
+    }
+
+    /**
+     * Registers a Twig function for rendering a hidden CSRF token field.
+     *
+     * @return \Twig\TwigFunction A Twig function 'csrfField' that returns a hidden input with the CSRF token.
+     */
+    public static function csrfField(): TwigFunction
+    {
+        return new TwigFunction('csrfField', function() {
+            $token = CsrfProtection::getToken();
+            $fieldName = CsrfProtection::getTokenFieldName();
+            return '<input type="hidden" name="' . htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8') . '" value="' . htmlspecialchars($token, ENT_QUOTES, 'UTF-8') . '">';
+        }, ['is_safe' => ['html']]);
     }
 }

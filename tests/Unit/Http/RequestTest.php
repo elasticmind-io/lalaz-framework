@@ -2,6 +2,8 @@
 
 use Lalaz\Http\Request;
 use Lalaz\Http\UploadedFile;
+use Lalaz\Security\CsrfProtection;
+use Lalaz\Exceptions\HttpException;
 
 describe('Request', function() {
 
@@ -315,4 +317,148 @@ describe('Request', function() {
             expect($request->params('search'))->toContain('hello world');
         });
     });
+
+    describe('CSRF Token Validation', function() {
+        beforeEach(function () {
+            $_COOKIE = [];
+        });
+
+        it('skips validation for GET requests', function() {
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+
+            $request = new Request();
+
+            expect(function () use ($request) {
+                $request->validateCsrfToken();
+            })->not->toThrow(HttpException::class);
+        });
+
+        it('validates CSRF token for POST requests', function() {
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            $token = CsrfProtection::generateToken();
+            $_POST = ['csrfToken' => $token, 'name' => 'John'];
+
+            $request = new Request();
+
+            expect(function () use ($request) {
+                $request->validateCsrfToken();
+            })->not->toThrow(HttpException::class);
+        });
+
+        it('validates CSRF token for PUT requests', function() {
+            $_SERVER['REQUEST_METHOD'] = 'PUT';
+            $token = CsrfProtection::generateToken();
+            $_POST = ['csrfToken' => $token];
+
+            $request = new Request();
+
+            expect(function () use ($request) {
+                $request->validateCsrfToken();
+            })->not->toThrow(HttpException::class);
+        });
+
+        it('validates CSRF token for PATCH requests', function() {
+            $_SERVER['REQUEST_METHOD'] = 'PATCH';
+            $token = CsrfProtection::generateToken();
+            $_POST = ['csrfToken' => $token];
+
+            $request = new Request();
+
+            expect(function () use ($request) {
+                $request->validateCsrfToken();
+            })->not->toThrow(HttpException::class);
+        });
+
+        it('throws exception for invalid CSRF token', function() {
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            CsrfProtection::generateToken();
+            $_POST = ['csrfToken' => 'invalid-token'];
+
+            $request = new Request();
+
+            expect(function () use ($request) {
+                $request->validateCsrfToken();
+            })->toThrow(HttpException::class);
+        });
+
+        it('throws exception for missing CSRF token', function() {
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            CsrfProtection::generateToken();
+            $_POST = ['name' => 'John'];
+
+            $request = new Request();
+
+            expect(function () use ($request) {
+                $request->validateCsrfToken();
+            })->toThrow(HttpException::class);
+        });
+
+        it('rotates token after successful validation', function() {
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            $originalToken = CsrfProtection::generateToken();
+            $_POST = ['csrfToken' => $originalToken];
+
+            $request = new Request();
+            $request->validateCsrfToken();
+
+            $newToken = $_COOKIE['__csrf_token'];
+            expect($newToken)->not->toBe($originalToken);
+        });
+
+        it('validates token from header for AJAX requests', function() {
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            $token = CsrfProtection::generateToken();
+            $_SERVER['HTTP_X_CSRF_TOKEN'] = $token;
+            $_POST = [];
+
+            $request = new Request();
+
+            expect(function () use ($request) {
+                $request->validateCsrfToken();
+            })->not->toThrow(HttpException::class);
+        });
+
+        it('includes forensic data in exception', function() {
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            $_SERVER['REMOTE_ADDR'] = '192.168.1.100';
+            $_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0';
+            CsrfProtection::generateToken();
+            $_POST = ['csrfToken' => 'wrong-token'];
+
+            $request = new Request();
+
+            try {
+                $request->validateCsrfToken();
+                expect(false)->toBeTrue(); // Should not reach here
+            } catch (HttpException $e) {
+                $context = $e->getContext();
+                expect($context)->toHaveKey('ip');
+                expect($context)->toHaveKey('user_agent');
+                expect($context['ip'])->toBe('192.168.1.100');
+                expect($context['user_agent'])->toBe('Mozilla/5.0');
+            }
+        });
+    });
+
+    describe('CSRF Token Getter', function() {
+        it('returns existing CSRF token', function() {
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+            $_COOKIE['__csrf_token'] = 'test-token-123';
+
+            $request = new Request();
+
+            expect($request->csrfToken())->toBe('test-token-123');
+        });
+
+        it('generates new CSRF token if not exists', function() {
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+
+            $request = new Request();
+            $token = $request->csrfToken();
+
+            expect($token)->toBeString()
+                ->and(strlen($token))->toBe(64);
+        });
+    });
 });
+
