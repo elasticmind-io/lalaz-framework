@@ -6,14 +6,14 @@ use Lalaz\Core\Config;
 use RuntimeException;
 
 /**
- * Class AdapterResolver
+ * Class ConnectionAdapterResolver
  *
  * Resolves the appropriate ConnectionAdapterInterface implementation
  * based on configuration or runtime context.
  *
  * @package elasticmind\lalaz-framework
  */
-class ConnectionAdaterResolver
+class ConnectionAdapterResolver
 {
     /**
      * Returns the resolved adapter based on the DB_PROVIDER config.

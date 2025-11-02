@@ -8,7 +8,7 @@ use \RuntimeException;
 use Lalaz\Core\Loader;
 use Lalaz\Core\Config;
 use Lalaz\Data\Database;
-use Lalaz\Data\Adapters\ConnectionAdaterResolver;
+use Lalaz\Data\Adapters\ConnectionAdapterResolver;
 use Lalaz\Event\EventHub;
 use Lalaz\Logging\Logger;
 use Lalaz\Logging\LogToConsole;
@@ -196,7 +196,7 @@ class Lalaz
     private static function initializeDb(): Database
     {
         debug('Resolving database adapter...');
-        $adapter = ConnectionAdaterResolver::resolve();
+        $adapter = ConnectionAdapterResolver::resolve();
         return new Database($adapter);
     }
 
