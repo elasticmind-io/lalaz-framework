@@ -4,6 +4,7 @@ use Lalaz\Security\Middleware\AuthenticationMiddleware;
 use Lalaz\Http\Request;
 use Lalaz\Http\Response;
 use Lalaz\Http\SessionManager;
+use Lalaz\Exceptions\HttpException;
 
 describe('AuthenticationMiddleware', function () {
     beforeEach(function () {
@@ -91,12 +92,10 @@ describe('AuthenticationMiddleware', function () {
             $request = new Request();
             $response = new Response();
 
-            // This will call die('Forbidden')
-            // We expect this to throw or terminate
             expect(function () use ($middleware, $request, $response) {
                 $middleware->handle($request, $response);
-            })->toThrow(Exception::class);
-        })->skip('Cannot test die() without process isolation');
+            })->toThrow(HttpException::class);
+        });
 
         it('redirects to login URL when provided and user not authenticated', function () {
             $middleware = new AuthenticationMiddleware('/auth/login');

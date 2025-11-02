@@ -4,6 +4,7 @@ use Lalaz\Security\Middleware\AuthorizationMiddleware;
 use Lalaz\Security\Authorizable;
 use Lalaz\Http\Request;
 use Lalaz\Http\Response;
+use Lalaz\Exceptions\HttpException;
 
 describe('AuthorizationMiddleware', function () {
     beforeEach(function () {
@@ -137,8 +138,60 @@ describe('AuthorizationMiddleware', function () {
 
             expect(function () use ($middleware, $request, $response) {
                 $middleware->handle($request, $response);
-            })->toThrow(Exception::class);
-        })->skip('Cannot test die() without process isolation');
+            })->toThrow(HttpException::class);
+        });
+
+        it('dies when user has no roles', function () {
+            $user = new class {
+                use Authorizable;
+
+                protected function fetchRoles(): array
+                {
+                    return [];
+                }
+
+                protected function fetchPermissions(): array
+                {
+                    return [];
+                }
+            };
+
+            $middleware = new AuthorizationMiddleware(['admin']);
+            $request = new Request();
+            $request->user = $user;
+            $response = new Response();
+
+            expect(function () use ($middleware, $request, $response) {
+                $middleware->handle($request, $response);
+            })->toThrow(HttpException::class);
+        });
+
+        it('dies when user object is null', function () {
+            $middleware = new AuthorizationMiddleware(['admin']);
+            $request = new Request();
+            $request->user = null;
+            $response = new Response();
+
+            expect(function () use ($middleware, $request, $response) {
+                $middleware->handle($request, $response);
+            })->toThrow(HttpException::class);
+        });
+
+        it('dies when user does not implement Authorizable', function () {
+            $user = new stdClass();
+
+            $middleware = new AuthorizationMiddleware(['admin']);
+            $request = new Request();
+            $request->user = $user;
+            $response = new Response();
+
+            expect(function () use ($middleware, $request, $response) {
+                $middleware->handle($request, $response);
+            })->toThrow(HttpException::class);
+        });
+    });
+
+    describe('role checking', function () {
 
         it('dies when user has no roles', function () {
             $user = new class {
@@ -163,7 +216,7 @@ describe('AuthorizationMiddleware', function () {
             expect(function () use ($middleware, $request, $response) {
                 $middleware->handle($request, $response);
             })->toThrow(Exception::class);
-        })->skip('Cannot test die() without process isolation');
+        });
 
         it('dies when user object is null', function () {
             $middleware = new AuthorizationMiddleware(['admin']);
@@ -174,7 +227,7 @@ describe('AuthorizationMiddleware', function () {
             expect(function () use ($middleware, $request, $response) {
                 $middleware->handle($request, $response);
             })->toThrow(Exception::class);
-        })->skip('Cannot test die() without process isolation');
+        });
 
         it('dies when user does not implement Authorizable', function () {
             $user = (object)['id' => 1, 'name' => 'Test'];
@@ -187,7 +240,7 @@ describe('AuthorizationMiddleware', function () {
             expect(function () use ($middleware, $request, $response) {
                 $middleware->handle($request, $response);
             })->toThrow(Exception::class);
-        })->skip('Cannot test die() without process isolation');
+        });
     });
 
     describe('role checking', function () {
@@ -215,7 +268,7 @@ describe('AuthorizationMiddleware', function () {
             expect(function () use ($middleware, $request, $response) {
                 $middleware->handle($request, $response);
             })->toThrow(Exception::class);
-        })->skip('Cannot test die() without process isolation');
+        });
 
         it('checks using hasAnyRole method', function () {
             $user = new class {
@@ -264,7 +317,7 @@ describe('AuthorizationMiddleware', function () {
             expect(function () use ($middleware, $request, $response) {
                 $middleware->handle($request, $response);
             })->toThrow(Exception::class);
-        })->skip('Cannot test die() without process isolation');
+        });
 
         it('handles false as user', function () {
             $middleware = new AuthorizationMiddleware(['admin']);
@@ -275,7 +328,7 @@ describe('AuthorizationMiddleware', function () {
             expect(function () use ($middleware, $request, $response) {
                 $middleware->handle($request, $response);
             })->toThrow(Exception::class);
-        })->skip('Cannot test die() without process isolation');
+        });
 
         it('handles empty string as user', function () {
             $middleware = new AuthorizationMiddleware(['admin']);
@@ -286,7 +339,7 @@ describe('AuthorizationMiddleware', function () {
             expect(function () use ($middleware, $request, $response) {
                 $middleware->handle($request, $response);
             })->toThrow(Exception::class);
-        })->skip('Cannot test die() without process isolation');
+        });
 
         it('handles zero as user', function () {
             $middleware = new AuthorizationMiddleware(['admin']);
@@ -297,7 +350,7 @@ describe('AuthorizationMiddleware', function () {
             expect(function () use ($middleware, $request, $response) {
                 $middleware->handle($request, $response);
             })->toThrow(Exception::class);
-        })->skip('Cannot test die() without process isolation');
+        });
     });
 
     describe('multiple roles', function () {

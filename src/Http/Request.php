@@ -3,6 +3,7 @@
 namespace Lalaz\Http;
 
 use stdClass;
+use Lalaz\Exceptions\HttpException;
 
 /**
  * Class Request
@@ -153,9 +154,10 @@ class Request extends stdClass
     /**
      * Validates the CSRF token for POST, PUT, and PATCH requests.
      *
-     * If the token in the body does not match the session token, the request is terminated.
+     * If the token in the body does not match the session token, throws an exception.
      *
      * @return void
+     * @throws HttpException
      */
     public function validateCsrfToken(): void
     {
@@ -164,7 +166,10 @@ class Request extends stdClass
         }
 
         if ($this->body()['csrfToken'] !== $this->session('csrfToken')) {
-            die('Request token is not valid!');
+            throw HttpException::csrfMismatch('Invalid CSRF token', [
+                'ip' => $this->ip(),
+                'user_agent' => $this->userAgent(),
+            ]);
         }
     }
 

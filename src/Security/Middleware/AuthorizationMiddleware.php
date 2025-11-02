@@ -6,6 +6,7 @@ use Lalaz\Http\Request;
 use Lalaz\Http\Response;
 use Lalaz\Http\Middleware;
 use Lalaz\Security\Authorizable;
+use Lalaz\Exceptions\HttpException;
 
 /**
  * Class AuthorizationMiddleware
@@ -43,11 +44,17 @@ class AuthorizationMiddleware extends Middleware
      */
     public function handle(Request $req, Response $res): void
     {
+        // If no roles required, allow access
+        if (empty($this->requiredRoles)) {
+            return;
+        }
+
         $user = $req->user;
 
         if (!$this::hasRole($user)) {
-            die('Forbidden');
-            return;
+            throw HttpException::forbidden('Insufficient permissions', [
+                'required_roles' => $this->requiredRoles,
+            ]);
         }
     }
 

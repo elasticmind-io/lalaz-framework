@@ -5,6 +5,8 @@ namespace Lalaz\Routing;
 use Lalaz\Http\Request;
 use Lalaz\Http\Response;
 use Lalaz\View\View;
+use Lalaz\Exceptions\FrameworkException;
+use Lalaz\Http\ExceptionHandler;
 
 /**
  * Class Router
@@ -64,7 +66,7 @@ class Router
         $controllerClassName = $this->controllerLookup($controllerName);
 
         if (!$controllerClassName) {
-            die("Controller {$controllerName} was not found!");
+            throw FrameworkException::controllerNotFound($controllerName);
         }
 
         return $this->map($method, $path, $controllerClassName, $function, $middlewares);
@@ -191,52 +193,57 @@ class Router
      */
     public function dispatch($method, $path): void
     {
-        if (strpos($path, "/public/") !== false) {
-            return;
-        }
-
-        $path = ($path !== '/') ? rtrim($path, '/') : $path;
-        $path = $this->removeQueryString($path);
-
-        $matchRouteAndMethod = function($route, $path, &$params, $method) {
-            return $this->matchPath($route->getPath(), $path, $params)
-                && $route->getMethod() === strtoupper($method);
-        };
-
-        foreach ($this->routes as $route) {
-            $params = array();
-
-            if ($matchRouteAndMethod($route, $path, $params, $method)) {
-                $pathParams = [];
-
-                foreach ($route->getParams() as $index => $paramName) {
-                    $pathParams[$paramName] = $params[$index];
-                }
-
-                $middlewares = array_merge($this->globalMiddlewares, $route->getMiddlewares());
-                $controller = $route->getController();
-                $function = $route->getFunction();
-
-                $req = new Request($pathParams);
-                $res = new Response();
-
-                foreach ($middlewares as $middleware) {
-                    if (is_object($middleware)) {
-                        $middleware->handle($req, $res);
-                    } else {
-                        $handler = new $middleware();
-                        $handler->handle($req, $res);
-                    }
-                }
-
-                $controllerInstance = new $controller;
-                $controllerInstance->callAction($function, [$req, $res]);
-
+        try {
+            if (strpos($path, "/public/") !== false) {
                 return;
             }
-        }
 
-        View::renderNotFound();
+            $path = ($path !== '/') ? rtrim($path, '/') : $path;
+            $path = $this->removeQueryString($path);
+
+            $matchRouteAndMethod = function($route, $path, &$params, $method) {
+                return $this->matchPath($route->getPath(), $path, $params)
+                    && $route->getMethod() === strtoupper($method);
+            };
+
+            foreach ($this->routes as $route) {
+                $params = array();
+
+                if ($matchRouteAndMethod($route, $path, $params, $method)) {
+                    $pathParams = [];
+
+                    foreach ($route->getParams() as $index => $paramName) {
+                        $pathParams[$paramName] = $params[$index];
+                    }
+
+                    $middlewares = array_merge($this->globalMiddlewares, $route->getMiddlewares());
+                    $controller = $route->getController();
+                    $function = $route->getFunction();
+
+                    $req = new Request($pathParams);
+                    $res = new Response();
+
+                    foreach ($middlewares as $middleware) {
+                        if (is_object($middleware)) {
+                            $middleware->handle($req, $res);
+                        } else {
+                            $handler = new $middleware();
+                            $handler->handle($req, $res);
+                        }
+                    }
+
+                    $controllerInstance = new $controller;
+                    $controllerInstance->callAction($function, [$req, $res]);
+
+                    return;
+                }
+            }
+
+            View::renderNotFound();
+
+        } catch (\Throwable $e) {
+            ExceptionHandler::handle($e);
+        }
     }
 
     /**

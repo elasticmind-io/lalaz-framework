@@ -6,6 +6,7 @@ use Lalaz\Http\Request;
 use Lalaz\Http\Response;
 use Lalaz\Http\Middleware;
 use Lalaz\Http\SessionManager;
+use Lalaz\Exceptions\HttpException;
 
 /**
  * Class AuthenticationMiddleware
@@ -43,8 +44,7 @@ class AuthenticationMiddleware extends Middleware
                 return;
             }
 
-            die('Forbidden');
-            return;
+            throw HttpException::unauthorized('Authentication required');
         }
 
         $req->user = $user;
