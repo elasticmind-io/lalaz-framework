@@ -251,14 +251,14 @@ trait DatabaseWritable
         $setParts = [];
 
         foreach ($data as $column => $value) {
-            $setParts[] = "`{$column}` = :{$column}";
+            $setParts[] = "{$column} = :{$column}";
         }
 
         $setClause = implode(', ', $setParts);
         $whereParts = [];
 
         foreach ($conditions as $column => $value) {
-            $whereParts[] = "`{$column}` = :{$column}";
+            $whereParts[] = "{$column} = :{$column}";
         }
 
         if (count($whereParts) === 0) {
@@ -269,7 +269,7 @@ trait DatabaseWritable
 
         $whereClause = implode(' AND ', $whereParts);
 
-        $sql = "UPDATE `{$tableName}` SET {$setClause} WHERE {$whereClause}";
+        $sql = "UPDATE {$tableName} SET {$setClause} WHERE {$whereClause}";
 
         $stmt = static::prepareAndBindParameters($sql, array_merge($data, $conditions));
         $stmt->execute();

@@ -56,7 +56,7 @@ class Router
      * @param string $path The URI path for the route.
      * @param string $controller The controller and method in 'Controller@method' format.
      * @param array $middlewares An optional array of middleware classes for this route.
-     * @return Router
+     * @return RouteDefinition
      */
     public function route($method, $path, $controller, $middlewares = array()): RouteDefinition
     {
@@ -76,7 +76,7 @@ class Router
      * @param string $path The URI path for the route.
      * @param string $controller The controller and method in 'Controller@method' format.
      * @param array $middlewares An optional array of middleware classes for this route.
-     * @return Router
+     * @return RouteDefinition
      */
     public function get($path, $controller, $middlewares = array()): RouteDefinition
     {
@@ -89,7 +89,7 @@ class Router
      * @param string $path The URI path for the route.
      * @param string $controller The controller and method in 'Controller@method' format.
      * @param array $middlewares An optional array of middleware classes for this route.
-     * @return Router
+     * @return RouteDefinition
      */
     public function post($path, $controller, $middlewares = array()): RouteDefinition
     {
@@ -102,7 +102,7 @@ class Router
      * @param string $path The URI path for the route.
      * @param string $controller The controller and method in 'Controller@method' format.
      * @param array $middlewares An optional array of middleware classes for this route.
-     * @return Router
+     * @return RouteDefinition
      */
     public function put($path, $controller, $middlewares = array()): RouteDefinition
     {
@@ -115,7 +115,7 @@ class Router
      * @param string $path The URI path for the route.
      * @param string $controller The controller and method in 'Controller@method' format.
      * @param array $middlewares An optional array of middleware classes for this route.
-     * @return Router
+     * @return RouteDefinition
      */
     public function patch($path, $controller, $middlewares = array()): RouteDefinition
     {
@@ -128,7 +128,7 @@ class Router
      * @param string $path The URI path for the route.
      * @param string $controller The controller and method in 'Controller@method' format.
      * @param array $middlewares An optional array of middleware classes for this route.
-     * @return Router
+     * @return RouteDefinition
      */
     public function delete($path, $controller, $middlewares = array()): RouteDefinition
     {
@@ -289,7 +289,7 @@ class Router
      * @param string $controller The controller class name.
      * @param string $function The method name in the controller to call.
      * @param array $middlewares An optional array of middleware classes.
-     * @return Router
+     * @return RouteDefinition
      */
     private function map($method, $path, $controller, $function, $middlewares = []): RouteDefinition
     {

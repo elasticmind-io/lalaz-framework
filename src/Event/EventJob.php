@@ -29,7 +29,9 @@ class EventJob extends Job
     public function handle(array $payload): void
     {
         $eventName = $payload['event_name'] ?? null;
-        $eventData = isset($payload['event_data']) ? unserialize($payload['event_data']) : null;
+        $eventData = isset($payload['event_data']) && is_string($payload['event_data'])
+            ? unserialize($payload['event_data'])
+            : null;
 
         $eventHub = new EventHub();
 

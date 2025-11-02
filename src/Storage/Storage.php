@@ -29,6 +29,6 @@ class Storage
     public static function driver(): StorageInterface
     {
         $manager = new StorageManager();
-        return new $manager->getDriver();
+        return $manager->getDriver();
     }
 }

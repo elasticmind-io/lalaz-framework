@@ -34,3 +34,11 @@
 | global functions to help you to reduce the number of lines of code in your test files.
 |
 */
+
+uses()
+    ->beforeEach(function() {
+        // Set Queue provider to in-memory for testing
+        putenv('QUEUE_PROVIDER=in-memory');
+        $_ENV['QUEUE_PROVIDER'] = 'in-memory';
+    })
+    ->in('Unit/Queue');
