@@ -4,6 +4,7 @@ namespace Lalaz\Data\Migrations;
 
 use Lalaz\Lalaz;
 use Lalaz\Core\Generators\GeneratorEngine;
+use Lalaz\Data\DatabaseHelper;
 use Lalaz\Data\Schema\SchemaBuilder;
 use Lalaz\Data\Schema\Blueprint;
 
@@ -60,13 +61,17 @@ class MigrationRunner
     /**
      * Checks if the migrations table exists in the database.
      *
+     * Uses DatabaseHelper to properly quote the table name.
+     *
      * @return bool True if the table exists, false otherwise.
      */
     private static function migrationsTableExists(): bool
     {
         try {
             $tableName = static::$migrationsTableName;
-            Lalaz::db()->query("SELECT 1 FROM $tableName LIMIT 1");
+            // ✅ SECURITY: Use DatabaseHelper to quote identifier
+            $sql = DatabaseHelper::buildTableExistsCheck($tableName);
+            Lalaz::db()->query($sql);
             return true;
         } catch (\Exception $e) {
             return false;
@@ -76,14 +81,18 @@ class MigrationRunner
     /**
      * Retrieves a list of migrations that have already been executed.
      *
+     * Uses DatabaseHelper to properly quote the table name.
+     *
      * @return array An array of executed migration filenames.
      */
     private static function getExecutedMigrations(): array
     {
         $tableName = static::$migrationsTableName;
+        // ✅ SECURITY: Use DatabaseHelper to quote identifier
+        $quotedTable = DatabaseHelper::quoteIdentifier($tableName);
 
         $executed = [];
-        $result = Lalaz::db()->query("SELECT migration FROM $tableName");
+        $result = Lalaz::db()->query("SELECT migration FROM {$quotedTable}");
 
         while ($row = $result->fetch()) {
             $executed[] = $row['migration'];
@@ -95,14 +104,18 @@ class MigrationRunner
     /**
      * Retrieves the current batch number (incremented for new migrations).
      *
+     * Uses DatabaseHelper to properly quote the table name.
+     *
      * @return int The next batch number.
      */
     private static function getNextBatch(): int
     {
         $tableName = static::$migrationsTableName;
+        // ✅ SECURITY: Use DatabaseHelper to quote identifier
+        $quotedTable = DatabaseHelper::quoteIdentifier($tableName);
 
         try {
-            $result = Lalaz::db()->query("SELECT MAX(batch) as max_batch FROM $tableName");
+            $result = Lalaz::db()->query("SELECT MAX(batch) as max_batch FROM {$quotedTable}");
             $row = $result->fetch();
             return ($row && $row['max_batch']) ? (int)$row['max_batch'] + 1 : 1;
         } catch (\Exception $e) {
@@ -112,7 +125,9 @@ class MigrationRunner
 
     /**
      * Logs a migration as executed by inserting a record into the migrations table.
+     *
      * Uses prepared statements to prevent SQL injection.
+     * Uses DatabaseHelper to properly quote the table name.
      *
      * @param string $migrationClass The name of the migration class.
      * @param int    $batch          The batch number.
@@ -121,9 +136,11 @@ class MigrationRunner
     private static function logMigration(string $migrationClass, int $batch): void
     {
         $tableName = static::$migrationsTableName;
+        // ✅ SECURITY: Use DatabaseHelper to quote identifier
+        $quotedTable = DatabaseHelper::quoteIdentifier($tableName);
 
         $stmt = Lalaz::db()->prepare(
-            "INSERT INTO $tableName (migration, batch) VALUES (?, ?)"
+            "INSERT INTO {$quotedTable} (migration, batch) VALUES (?, ?)"
         );
         $stmt->execute([$migrationClass, $batch]);
     }
@@ -160,13 +177,17 @@ class MigrationRunner
     /**
      * Rolls back the last executed migration.
      *
+     * Uses DatabaseHelper to properly quote the table name.
+     *
      * @return void
      */
     public static function rollback(): void
     {
         $tableName = static::$migrationsTableName;
+        // ✅ SECURITY: Use DatabaseHelper to quote identifier
+        $quotedTable = DatabaseHelper::quoteIdentifier($tableName);
 
-        $result = Lalaz::db()->query("SELECT MAX(batch) as max_batch FROM $tableName");
+        $result = Lalaz::db()->query("SELECT MAX(batch) as max_batch FROM {$quotedTable}");
         $row = $result->fetch();
         $lastBatch = $row ? (int)$row['max_batch'] : null;
 
@@ -176,7 +197,7 @@ class MigrationRunner
         }
 
         $stmt = Lalaz::db()->prepare(
-            "SELECT migration FROM $tableName WHERE batch = ? ORDER BY id DESC LIMIT 1"
+            "SELECT migration FROM {$quotedTable} WHERE batch = ? ORDER BY id DESC LIMIT 1"
         );
         $stmt->execute([$lastBatch]);
         $lastMigration = $stmt->fetch();
@@ -192,7 +213,7 @@ class MigrationRunner
             $migrationInstance->down();
 
             $deleteStmt = Lalaz::db()->prepare(
-                "DELETE FROM $tableName WHERE migration = ?"
+                "DELETE FROM {$quotedTable} WHERE migration = ?"
             );
             $deleteStmt->execute([$migrationClassWithTimestamp]);
 
@@ -205,14 +226,18 @@ class MigrationRunner
     /**
      * Resets all migrations by rolling back every executed migration.
      *
+     * Uses DatabaseHelper to properly quote the table name.
+     *
      * @return void
      */
     public static function reset(): void
     {
         $tableName = static::$migrationsTableName;
+        // ✅ SECURITY: Use DatabaseHelper to quote identifier
+        $quotedTable = DatabaseHelper::quoteIdentifier($tableName);
 
         $migrations = Lalaz::db()
-            ->query("SELECT migration FROM $tableName ORDER BY batch DESC, id DESC")
+            ->query("SELECT migration FROM {$quotedTable} ORDER BY batch DESC, id DESC")
             ->fetchAll();
 
         if (empty($migrations)) {
@@ -231,7 +256,7 @@ class MigrationRunner
             $migrationInstance->down();
 
             $stmt = Lalaz::db()->prepare(
-                "DELETE FROM $tableName WHERE migration = ?"
+                "DELETE FROM {$quotedTable} WHERE migration = ?"
             );
             $stmt->execute([$migrationClassWithTimestamp]);
 

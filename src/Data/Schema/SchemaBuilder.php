@@ -3,6 +3,7 @@
 namespace Lalaz\Data\Schema;
 
 use Lalaz\Lalaz;
+use Lalaz\Data\DatabaseHelper;
 use Lalaz\Data\Schema\Grammars\MySqlGrammar;
 use Lalaz\Data\Schema\Grammars\SQLiteGrammar;
 use Lalaz\Data\Schema\Grammars\PostgresGrammar;
@@ -105,13 +106,16 @@ class SchemaBuilder
     /**
      * Drops a table from the database if it exists.
      *
+     * Uses DatabaseHelper to properly quote the table name and prevent SQL injection.
+     *
      * @param string $table The name of the table to drop.
      *
      * @return void
      */
-    public static function dropIfExists($table)
+    public static function dropIfExists(string $table): void
     {
-        $sql = "DROP TABLE IF EXISTS $table";
+        // ✅ SECURITY: Use DatabaseHelper to quote identifier and prevent SQL injection
+        $sql = DatabaseHelper::buildDropTableIfExists($table);
         Lalaz::db()->exec($sql);
     }
 }
