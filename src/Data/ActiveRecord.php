@@ -3,17 +3,8 @@
 namespace Lalaz\Data;
 
 use Exception;
-use PDO;
-use PDOStatement;
-use PDOException;
 
 use Lalaz\Lalaz;
-
-use Lalaz\Data\Query\Queries;
-use Lalaz\Data\Query\Expr;
-use Lalaz\Data\Query\Expressions;
-use Lalaz\Data\Contracts\QueryBuilderInterface;
-
 use Lalaz\Data\Concerns\Presentable;
 use Lalaz\Data\Concerns\DatabaseQueryable;
 use Lalaz\Data\Concerns\DatabaseReadable;
@@ -260,7 +251,7 @@ abstract class ActiveRecord extends Model
      */
     public static function commit(): void
     {
-        Lalaz::getInstance()->db->commit();
+        Lalaz::getInstance()->db()->commit();
     }
 
     /**
