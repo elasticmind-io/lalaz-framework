@@ -5,6 +5,7 @@ namespace Lalaz\Data\Adapters;
 use PDO;
 use PDOException;
 use PDOStatement;
+use Lalaz\Data\Contracts\ConnectionAdapterInterface;
 
 /**
  * Class PostgresAdapter
@@ -20,6 +21,8 @@ class PostgresAdapter implements ConnectionAdapterInterface
     protected ?PDO $pdo = null;
     protected array $config;
     protected ?string $lastInsertedId = null;
+    /** @var callable(string, string, string, array): PDO */
+    private $pdoFactory;
 
     /**
      * PostgresAdapter constructor.
@@ -32,13 +35,14 @@ class PostgresAdapter implements ConnectionAdapterInterface
      *                      - password: Database password
      *                      - schema: Schema name (default: public)
      */
-    public function __construct(array $config)
+    public function __construct(array $config, ?callable $pdoFactory = null)
     {
         $this->config = array_merge([
             'host' => 'localhost',
             'port' => 5432,
             'schema' => 'public',
         ], $config);
+        $this->pdoFactory = $pdoFactory ?? static fn (string $dsn, string $user, string $password, array $options): PDO => new PDO($dsn, $user, $password, $options);
     }
 
     /**
@@ -59,7 +63,8 @@ class PostgresAdapter implements ConnectionAdapterInterface
         );
 
         try {
-            $this->pdo = new PDO(
+            $factory = $this->pdoFactory;
+            $this->pdo = $factory(
                 $dsn,
                 $this->config['user'],
                 $this->config['password'],
@@ -69,6 +74,10 @@ class PostgresAdapter implements ConnectionAdapterInterface
                     PDO::ATTR_EMULATE_PREPARES => false, // Important for PostgreSQL
                 ]
             );
+
+            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
 
             // Set search path to specified schema
             if (!empty($this->config['schema'])) {
@@ -166,7 +175,7 @@ class PostgresAdapter implements ConnectionAdapterInterface
      * @param string|null $sequenceName Optional sequence name
      * @return string
      */
-    public function lastInsertId(string $sequenceName = null): string
+    public function lastInsertId(?string $sequenceName = null): string
     {
         if ($this->lastInsertedId !== null) {
             return $this->lastInsertedId;

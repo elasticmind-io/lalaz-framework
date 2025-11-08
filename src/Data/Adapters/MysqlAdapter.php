@@ -3,6 +3,7 @@
 namespace Lalaz\Data\Adapters;
 
 use PDO;
+use Lalaz\Data\Contracts\ConnectionAdapterInterface;
 
 /**
  * Class MysqlAdapter
@@ -15,10 +16,13 @@ class MysqlAdapter implements ConnectionAdapterInterface
 {
     protected ?PDO $pdo = null;
     protected array $config;
+    /** @var callable(string, string, string, array): PDO */
+    private $pdoFactory;
 
-    public function __construct(array $config)
+    public function __construct(array $config, ?callable $pdoFactory = null)
     {
         $this->config = $config;
+        $this->pdoFactory = $pdoFactory ?? static fn (string $dsn, string $user, string $password, array $options): PDO => new PDO($dsn, $user, $password, $options);
     }
 
     public function connect(): void
@@ -32,7 +36,8 @@ class MysqlAdapter implements ConnectionAdapterInterface
             $this->config['database']
         );
 
-        $this->pdo = new PDO(
+        $factory = $this->pdoFactory;
+        $this->pdo = $factory(
             $dsn,
             $this->config['user'],
             $this->config['password'],
@@ -41,6 +46,9 @@ class MysqlAdapter implements ConnectionAdapterInterface
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             ]
         );
+
+        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     }
 
     public function query(string $sql, array $bindings = []): mixed

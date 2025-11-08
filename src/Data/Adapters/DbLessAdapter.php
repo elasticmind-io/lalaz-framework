@@ -2,6 +2,8 @@
 
 namespace Lalaz\Data\Adapters;
 
+use Lalaz\Data\Contracts\ConnectionAdapterInterface;
+
 class DbLessAdapter implements ConnectionAdapterInterface
 {
     public function connect(): void {}

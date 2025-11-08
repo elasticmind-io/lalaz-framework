@@ -400,16 +400,21 @@ trait DatabaseReadable
             /** @var \Lalaz\Data\Relation $relation */
             $relation = $firstModel->$relationName();
             $relationType = $relation->getRelationType();
-            $relatedClass = $relation->getQuery()->getFrom()[0];
+            $relatedClass = $relation->getRelatedClass();
             $foreignKey = $relation->getForeignKey();
 
             // Get all IDs from the parent models
             $parentKey = $relation->getLocalKey() ?? static::primaryKey();
-            $parentIds = array_filter(array_map(function ($model) use ($parentKey) {
-                return $model->$parentKey ?? null;
-            }, $models));
+            $parentIds = [];
 
-            if (empty($parentIds)) {
+            foreach ($models as $model) {
+                $value = $model->$parentKey ?? null;
+                if ($value !== null) {
+                    $parentIds[] = $value;
+                }
+            }
+
+            if ($parentIds === []) {
                 continue;
             }
 
@@ -454,18 +459,23 @@ trait DatabaseReadable
         bool $isHasOne
     ): void {
         // Build WHERE IN query for all parent IDs at once
-        $placeholders = implode(',', array_map(fn($i) => ":id_$i", array_keys($parentIds)));
+        $placeholders = [];
         $parameters = [];
-        foreach (array_values($parentIds) as $index => $id) {
+
+        foreach ($parentIds as $index => $id) {
+            $placeholder = ":id_$index";
+            $placeholders[] = $placeholder;
             $parameters["id_$index"] = $id;
         }
 
         $relatedModel = new $relatedClass();
         $tableName = $relatedModel::tableName();
 
+        $placeholderList = implode(',', $placeholders);
+
         $query = Queries::select('*')
             ->from($tableName)
-            ->where("$foreignKey IN ($placeholders)");
+            ->where("$foreignKey IN ($placeholderList)");
 
         $query = $relatedModel::applySoftDeleteConstraint($query);
 
@@ -516,11 +526,15 @@ trait DatabaseReadable
         $ownerKey = $ownerKey ?? $relatedModel::primaryKey();
 
         // Get all foreign key values
-        $foreignIds = array_filter(array_map(function ($model) use ($foreignKey) {
-            return $model->$foreignKey ?? null;
-        }, $models));
+        $foreignIds = [];
+        foreach ($models as $model) {
+            $value = $model->$foreignKey ?? null;
+            if ($value !== null) {
+                $foreignIds[] = $value;
+            }
+        }
 
-        if (empty($foreignIds)) {
+        if ($foreignIds === []) {
             foreach ($models as $model) {
                 $model->$relationName = null;
             }
@@ -528,16 +542,21 @@ trait DatabaseReadable
         }
 
         // Build WHERE IN query
-        $placeholders = implode(',', array_map(fn($i) => ":id_$i", array_keys($foreignIds)));
+        $placeholders = [];
         $parameters = [];
-        foreach (array_values($foreignIds) as $index => $id) {
+
+        foreach ($foreignIds as $index => $id) {
+            $placeholder = ":id_$index";
+            $placeholders[] = $placeholder;
             $parameters["id_$index"] = $id;
         }
 
         $tableName = $relatedModel::tableName();
+        $placeholderList = implode(',', $placeholders);
+
         $query = Queries::select('*')
             ->from($tableName)
-            ->where("$ownerKey IN ($placeholders)");
+            ->where("$ownerKey IN ($placeholderList)");
 
         $query = $relatedModel::applySoftDeleteConstraint($query);
 
@@ -577,23 +596,28 @@ trait DatabaseReadable
         $pivotTable = $relation->getPivotTable();
         $foreignPivotKey = $relation->getForeignKey();
         $relatedPivotKey = $relation->getRelatedPivotKey();
-        $relatedClass = $relation->getQuery()->getFrom()[0];
+        $relatedClass = $relation->getRelatedClass();
         $ownerKey = $relation->getOwnerKey();
 
         $relatedModel = new $relatedClass();
         $tableName = $relatedModel::tableName();
 
         // Build query with pivot table
-        $placeholders = implode(',', array_map(fn($i) => ":id_$i", array_keys($parentIds)));
+        $placeholders = [];
         $parameters = [];
-        foreach (array_values($parentIds) as $index => $id) {
+
+        foreach ($parentIds as $index => $id) {
+            $placeholder = ":id_$index";
+            $placeholders[] = $placeholder;
             $parameters["id_$index"] = $id;
         }
+
+        $placeholderList = implode(',', $placeholders);
 
         $query = Queries::select("$tableName.*, $pivotTable.$foreignPivotKey as pivot_parent_id")
             ->from($tableName)
             ->innerJoin("$pivotTable ON $pivotTable.$relatedPivotKey = $tableName.$ownerKey")
-            ->where("$pivotTable.$foreignPivotKey IN ($placeholders)");
+            ->where("$pivotTable.$foreignPivotKey IN ($placeholderList)");
 
         $query = $relatedModel::applySoftDeleteConstraint($query);
 

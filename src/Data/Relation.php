@@ -254,6 +254,16 @@ class Relation
     }
 
     /**
+     * Get the related model class name.
+     *
+     * @return string
+     */
+    public function getRelatedClass(): string
+    {
+        return $this->relatedClass;
+    }
+
+    /**
      * Add a JOIN clause to the query.
      *
      * @param string $table      The table to join.
@@ -263,7 +273,20 @@ class Relation
      */
     public function join(string $table, string $condition, string $type = 'INNER'): self
     {
-        $this->getQuery()->innerJoin($table, $condition, $type);
+        $builder = $this->getQuery();
+        $clause = $table . ' ON ' . $condition;
+
+        switch (strtoupper($type)) {
+            case 'LEFT':
+                $builder->leftJoin($clause);
+                break;
+            case 'RIGHT':
+                $builder->rightJoin($clause);
+                break;
+            default:
+                $builder->innerJoin($clause);
+        }
+
         return $this;
     }
 

@@ -5,6 +5,7 @@ namespace Lalaz\Data\Adapters;
 use PDO;
 use PDOException;
 use PDOStatement;
+use Lalaz\Data\Contracts\ConnectionAdapterInterface;
 
 /**
  * Class SQLiteAdapter
@@ -17,19 +18,22 @@ class SQLiteAdapter implements ConnectionAdapterInterface
 {
     protected ?PDO $pdo = null;
     protected string $path;
+    /** @var callable(string, array): PDO */
+    private $pdoFactory;
 
     /**
      * SQLiteAdapter constructor.
      *
      * @param array $config Must contain 'path' => '/full/path/to/sqlite.db'
      */
-    public function __construct(array $config)
+    public function __construct(array $config, ?callable $pdoFactory = null)
     {
         if (empty($config['path'])) {
             throw new \InvalidArgumentException('SQLite database path is required.');
         }
 
         $this->path = $config['path'];
+        $this->pdoFactory = $pdoFactory ?? static fn (string $dsn, array $options = []): PDO => new PDO($dsn, null, null, $options);
 
         // Defensive: create the .sqlite file if it doesn't exist
         if (!file_exists($this->path)) {
@@ -47,7 +51,12 @@ class SQLiteAdapter implements ConnectionAdapterInterface
         if ($this->pdo) return;
 
         try {
-            $this->pdo = new PDO("sqlite:{$this->path}");
+            $factory = $this->pdoFactory;
+            $this->pdo = $factory("sqlite:{$this->path}", [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ]);
+
             $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         } catch (PDOException $e) {

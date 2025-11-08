@@ -2,6 +2,8 @@
 
 namespace Lalaz\Logging;
 
+use Lalaz\Logging\Contracts\LoggerWriterInterface;
+
 /**
  * Class LogToConsole
  *

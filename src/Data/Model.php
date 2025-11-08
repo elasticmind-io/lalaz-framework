@@ -2,8 +2,6 @@
 
 namespace Lalaz\Data;
 
-use Lalaz\Lalaz;
-
 use Lalaz\Data\Concerns\Serializable;
 use Lalaz\Data\Concerns\HasValidation;
 

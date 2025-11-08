@@ -2,6 +2,8 @@
 
 namespace Lalaz\Data\Query;
 
+use Lalaz\Data\Contracts\QueryBuilderInterface;
+
 /**
  * Class SelectQueryBuilder
  *

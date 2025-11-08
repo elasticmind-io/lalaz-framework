@@ -2,6 +2,8 @@
 
 namespace Lalaz\Data\Query;
 
+use Lalaz\Data\Contracts\QueryBuilderInterface;
+
 /**
  * InsertQueryBuilder - Fluent query builder for INSERT statements
  *
@@ -20,6 +22,7 @@ class InsertQueryBuilder implements QueryBuilderInterface
     private array $values = [];
     private array $onDuplicateKeyUpdate = [];
     private array $returning = [];
+    private array $bindings = [];
 
     /**
      * Set the table to insert into
@@ -127,11 +130,16 @@ class InsertQueryBuilder implements QueryBuilderInterface
         // Add values
         $sql .= " VALUES";
 
+        $this->bindings = [];
         $valueSets = [];
-        foreach ($this->values as $row) {
+        $multipleRows = count($this->values) > 1;
+
+        foreach ($this->values as $index => $row) {
             $placeholders = [];
             foreach ($this->columns as $column) {
-                $placeholders[] = ":{$column}";
+                $placeholderName = $multipleRows ? "{$column}_{$index}" : $column;
+                $placeholders[] = ':' . $placeholderName;
+                $this->bindings[$placeholderName] = $row[$column] ?? null;
             }
             $valueSets[] = '(' . implode(', ', $placeholders) . ')';
         }
@@ -148,6 +156,7 @@ class InsertQueryBuilder implements QueryBuilderInterface
                 } else {
                     // Parameterized value
                     $updates[] = "{$column} = :update_{$column}";
+                    $this->bindings["update_{$column}"] = $value;
                 }
             }
             $sql .= ' ON DUPLICATE KEY UPDATE ' . implode(', ', $updates);
@@ -209,5 +218,15 @@ class InsertQueryBuilder implements QueryBuilderInterface
     public function getReturning(): array
     {
         return $this->returning;
+    }
+
+    /**
+     * Return the flattened bindings for the generated statement.
+     *
+     * @return array<string, mixed>
+     */
+    public function getBindings(): array
+    {
+        return $this->bindings;
     }
 }

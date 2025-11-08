@@ -26,9 +26,12 @@ trait HasRelationships
      */
     public function hasMany(string $relatedClass, ?string $foreignKey = null, ?string $localKey = null): Relation
     {
-        $foreignKey = $foreignKey ?: strtolower(static::class) . '_id';
+        $foreignKey = $foreignKey ?: strtolower($this->classBaseName(static::class)) . '_id';
         $localKey = $localKey ?: static::primaryKey();
-        return new Relation($relatedClass, $foreignKey, $localKey, 'hasMany');
+
+        $localValue = $this->resolveAttributeValue($localKey);
+
+        return new Relation($relatedClass, $foreignKey, $localValue, 'hasMany', $localKey);
     }
 
     /**
@@ -41,9 +44,12 @@ trait HasRelationships
      */
     public function hasOne(string $relatedClass, ?string $foreignKey = null, ?string $localKey = null): Relation
     {
-        $foreignKey = $foreignKey ?: strtolower(static::class) . '_id';
+        $foreignKey = $foreignKey ?: strtolower($this->classBaseName(static::class)) . '_id';
         $localKey = $localKey ?: static::primaryKey();
-        return new Relation($relatedClass, $this->$foreignKey, $localKey, 'hasOne');
+
+        $localValue = $this->resolveAttributeValue($localKey);
+
+        return new Relation($relatedClass, $foreignKey, $localValue, 'hasOne', $localKey);
     }
 
     /**
@@ -56,7 +62,7 @@ trait HasRelationships
      */
     public function belongsTo(string $relatedClass, ?string $foreignKey = null, ?string $ownerKey = null): Relation
     {
-        $foreignKey = $foreignKey ?: strtolower($relatedClass) . '_id';
+        $foreignKey = $foreignKey ?: strtolower($this->classBaseName($relatedClass)) . '_id';
         $ownerKey = $ownerKey ?: (new $relatedClass())->primaryKey();
         return new Relation($relatedClass, $foreignKey, $this->$foreignKey, 'belongsTo', null, $ownerKey);
     }
@@ -108,8 +114,8 @@ trait HasRelationships
      */
     protected function joiningTable(string $relatedClass): string
     {
-        $base = strtolower(class_basename($this));
-        $related = strtolower(class_basename($relatedClass));
+        $base = strtolower($this->classBaseName($this));
+        $related = strtolower($this->classBaseName($relatedClass));
 
         $tables = [$base, $related];
         sort($tables);
@@ -124,6 +130,29 @@ trait HasRelationships
      */
     protected function foreignPivotKey(): string
     {
-        return strtolower(class_basename($this)) . '_id';
+        return strtolower($this->classBaseName($this)) . '_id';
+    }
+
+    /**
+     * Resolve attribute value from primary/local key supporting scalar or array keys.
+     */
+    private function resolveAttributeValue(string|array $key): mixed
+    {
+        if (is_array($key)) {
+            return array_map(fn ($k) => $this->{$k} ?? null, $key);
+        }
+
+        return $this->{$key} ?? null;
+    }
+
+    /**
+     * Retrieve base class name without namespace for strings or objects.
+     */
+    private function classBaseName(object|string $subject): string
+    {
+        $fqcn = is_object($subject) ? $subject::class : $subject;
+        $position = strrpos($fqcn, '\\');
+
+        return $position === false ? $fqcn : substr($fqcn, $position + 1);
     }
 }

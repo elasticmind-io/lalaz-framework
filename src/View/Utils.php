@@ -2,10 +2,8 @@
 
 namespace Lalaz\View;
 
-use Lalaz\Lalaz;
 use Lalaz\Http\Concerns\FlashMessage;
 use Lalaz\Security\CsrfProtection;
-use Twig\Loader\FilesystemLoader;
 use Twig\Environment;
 use Twig\TwigFunction;
 

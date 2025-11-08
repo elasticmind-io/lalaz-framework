@@ -2,8 +2,8 @@
 
 namespace Lalaz\Data;
 
-use Lalaz\Data\Contracts\ConnectionAdapterInterface;
 use PDOStatement;
+use Lalaz\Data\Contracts\ConnectionAdapterInterface;
 
 /**
  * Class Database

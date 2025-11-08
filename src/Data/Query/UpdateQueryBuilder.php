@@ -2,6 +2,8 @@
 
 namespace Lalaz\Data\Query;
 
+use Lalaz\Data\Contracts\QueryBuilderInterface;
+
 /**
  * UpdateQueryBuilder - Fluent query builder for UPDATE statements
  *
@@ -21,6 +23,8 @@ class UpdateQueryBuilder implements QueryBuilderInterface
     private array $where = [];
     private array $joins = [];
     private array $returning = [];
+    private array $rawSet = [];
+    private array $bindings = [];
 
     /**
      * Set the table to update
@@ -46,10 +50,23 @@ class UpdateQueryBuilder implements QueryBuilderInterface
         if (is_array($column)) {
             foreach ($column as $col => $val) {
                 $this->set[$col] = $val;
+                unset($this->rawSet[$col]);
             }
         } else {
             $this->set[$column] = $value;
+            unset($this->rawSet[$column]);
         }
+        return $this;
+    }
+
+    /**
+     * Set a raw SQL expression for a column (no parameter binding).
+     */
+    public function setRaw(string $column, string $expression): self
+    {
+        $this->rawSet[$column] = $expression;
+        unset($this->set[$column]);
+
         return $this;
     }
 
@@ -182,7 +199,7 @@ class UpdateQueryBuilder implements QueryBuilderInterface
             throw new \InvalidArgumentException('Table name is required for UPDATE query');
         }
 
-        if (empty($this->set)) {
+        if (empty($this->set) && empty($this->rawSet)) {
             throw new \InvalidArgumentException('At least one column must be set for UPDATE query');
         }
 
@@ -194,22 +211,18 @@ class UpdateQueryBuilder implements QueryBuilderInterface
         }
 
         // Add SET clause
+        $this->bindings = [];
         $setParts = [];
+
         foreach ($this->set as $column => $value) {
-            if (is_string($value) && (
-                strpos($value, '(') !== false ||
-                strpos($value, '+') !== false ||
-                strpos($value, '-') !== false ||
-                strpos($value, '*') !== false ||
-                strpos($value, '/') !== false
-            )) {
-                // Raw expression (e.g., "column + 1", "UPPER(column)")
-                $setParts[] = "{$column} = {$value}";
-            } else {
-                // Parameterized value
-                $setParts[] = "{$column} = :{$column}";
-            }
+            $setParts[] = "{$column} = :{$column}";
+            $this->bindings[$column] = $value;
         }
+
+        foreach ($this->rawSet as $column => $expression) {
+            $setParts[] = "{$column} = {$expression}";
+        }
+
         $sql .= ' SET ' . implode(', ', $setParts);
 
         // Add WHERE clause
@@ -273,5 +286,15 @@ class UpdateQueryBuilder implements QueryBuilderInterface
     public function getReturning(): array
     {
         return $this->returning;
+    }
+
+    /**
+     * Return the bindings associated with SET clauses.
+     *
+     * @return array<string, mixed>
+     */
+    public function getBindings(): array
+    {
+        return $this->bindings;
     }
 }

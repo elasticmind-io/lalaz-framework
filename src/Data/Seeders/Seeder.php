@@ -3,6 +3,7 @@
 namespace Lalaz\Data\Seeders;
 
 use Lalaz\Data\Database;
+use Lalaz\Data\Contracts\SeederInterface;
 
 /**
  * Class Seeder

@@ -2,8 +2,9 @@
 
 namespace Lalaz\Data\Adapters;
 
-use Lalaz\Core\Config;
 use RuntimeException;
+use Lalaz\Core\Config;
+use Lalaz\Data\Contracts\ConnectionAdapterInterface;
 
 /**
  * Class ConnectionAdapterResolver
@@ -53,6 +54,29 @@ class ConnectionAdapterResolver
                     'database' => $database,
                     'user'     => $user,
                     'password' => $password,
+                ]);
+
+            case 'pgsql':
+            case 'postgres':
+            case 'postgresql':
+                $host       = Config::get('DB_HOST');
+                $port       = Config::get('DB_PORT');
+                $database   = Config::get('DB_NAME');
+                $user       = Config::get('DB_USER');
+                $password   = Config::get('DB_PASSWORD');
+                $schema     = Config::get('DB_SCHEMA', 'public');
+
+                if (!$host || !$port || !$database || !$user || !$password) {
+                    throw new RuntimeException('Incomplete PostgreSQL database configuration.');
+                }
+
+                return new PostgresAdapter([
+                    'host'     => $host,
+                    'port'     => $port,
+                    'database' => $database,
+                    'user'     => $user,
+                    'password' => $password,
+                    'schema'   => $schema,
                 ]);
 
             case 'dbless':
