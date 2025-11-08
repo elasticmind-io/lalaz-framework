@@ -2,9 +2,9 @@
 
 namespace Lalaz\Logging;
 
-use Lalaz\Lalaz;
 use Lalaz\Core\Config;
 use Lalaz\Logging\Contracts\FormatterInterface;
+use Lalaz\Logging\Contracts\LoggerWriterInterface;
 use Lalaz\Logging\Formatters\TextFormatter;
 
 /**
@@ -25,9 +25,9 @@ final class Logger
 
     protected FormatterInterface $formatter;
 
-    protected function __construct(FormatterInterface $formatter = new TextFormatter())
+    protected function __construct(?FormatterInterface $formatter = null)
     {
-        $this->formatter = $formatter;
+        $this->formatter = $formatter ?? new TextFormatter();
     }
 
     /**
@@ -35,7 +35,7 @@ final class Logger
      *
      * @return Logger A new Logger instance.
      */
-    public static function create(FormatterInterface $formatter = new TextFormatter()): Logger
+    public static function create(?FormatterInterface $formatter = null): Logger
     {
         return new Logger($formatter);
     }
