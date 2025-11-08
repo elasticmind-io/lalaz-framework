@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Lalaz\Http\Client\Transport;
+namespace Lalaz\Http\Contracts;
 
 use Lalaz\Http\Client\ApiClientException;
 

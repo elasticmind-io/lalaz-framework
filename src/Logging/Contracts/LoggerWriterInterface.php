@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Lalaz\Logging;
+namespace Lalaz\Logging\Contracts;
 
 /**
  * Interface LoggerWriterInterface

@@ -2,6 +2,8 @@
 
 namespace Lalaz\Logging\Formatters;
 
+use Lalaz\Logging\Contracts\FormatterInterface;
+
 /**
  * Class JsonFormatter
  *

@@ -4,7 +4,7 @@ namespace Lalaz\Http\Client;
 
 use Psr\Log\LoggerInterface;
 use Lalaz\Http\Client\Transport\CurlTransport;
-use Lalaz\Http\Client\Transport\HttpTransportInterface;
+use Lalaz\Http\Contracts\HttpTransportInterface;
 
 /**
  * Class ApiClientBuilder

@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Lalaz\Data\Adapters;
+namespace Lalaz\Data\Contracts;
 
 /**
  * Interface ConnectionAdapterInterface

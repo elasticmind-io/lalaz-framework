@@ -2,7 +2,7 @@
 
 namespace Lalaz\Data;
 
-use Lalaz\Data\Adapters\ConnectionAdapterInterface;
+use Lalaz\Data\Contracts\ConnectionAdapterInterface;
 use PDOStatement;
 
 /**

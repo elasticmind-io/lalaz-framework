@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Lalaz\Logging\Formatters;
+namespace Lalaz\Logging\Contracts;
 
 /**
  * Interface FormatterInterface

@@ -2,7 +2,7 @@
 
 namespace Lalaz\Data\Schema;
 
-use Lalaz\Data\Schema\Contracts\SchemaGrammarInterface;
+use Lalaz\Data\Contracts\SchemaGrammarInterface;
 
 /**
  * Class Blueprint

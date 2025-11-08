@@ -7,7 +7,7 @@ use PDO;
 use Lalaz\Data\PagedResult;
 use Lalaz\Data\Query\Expr;
 use Lalaz\Data\Query\Queries;
-use Lalaz\Data\Query\QueryBuilderInterface;
+use Lalaz\Data\Contracts\QueryBuilderInterface;
 use Lalaz\Data\Query\SelectQueryBuilder;
 
 trait DatabaseReadable

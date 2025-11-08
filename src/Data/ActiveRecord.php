@@ -12,7 +12,7 @@ use Lalaz\Lalaz;
 use Lalaz\Data\Query\Queries;
 use Lalaz\Data\Query\Expr;
 use Lalaz\Data\Query\Expressions;
-use Lalaz\Data\Query\QueryBuilderInterface;
+use Lalaz\Data\Contracts\QueryBuilderInterface;
 
 use Lalaz\Data\Concerns\Presentable;
 use Lalaz\Data\Concerns\DatabaseQueryable;

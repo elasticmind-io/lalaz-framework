@@ -4,7 +4,7 @@ namespace Lalaz\Logging;
 
 use Lalaz\Lalaz;
 use Lalaz\Core\Config;
-use Lalaz\Logging\Formatters\FormatterInterface;
+use Lalaz\Logging\Contracts\FormatterInterface;
 use Lalaz\Logging\Formatters\TextFormatter;
 
 /**

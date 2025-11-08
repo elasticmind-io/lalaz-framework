@@ -3,7 +3,7 @@
 namespace Lalaz\Data\Schema\Grammars;
 
 use Lalaz\Data\Schema\Blueprint;
-use Lalaz\Data\Schema\Contracts\SchemaGrammarInterface;
+use Lalaz\Data\Contracts\SchemaGrammarInterface;
 
 /**
  * Class MySqlGrammar

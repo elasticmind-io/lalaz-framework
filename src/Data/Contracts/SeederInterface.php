@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Lalaz\Data\Seeders;
+namespace Lalaz\Data\Contracts;
 
 /**
  * Interface SeederInterface

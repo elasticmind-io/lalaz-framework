@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Lalaz\Data\Schema\Contracts;
+namespace Lalaz\Data\Contracts;
 
 use Lalaz\Data\Schema\Blueprint;
 

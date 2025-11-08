@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Lalaz\Data\Query;
+namespace Lalaz\Data\Contracts;
 
 /**
  * Interface IQueryBuilder
