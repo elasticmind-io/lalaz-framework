@@ -6,7 +6,7 @@ use Throwable;
 use Lalaz\Lalaz;
 use Lalaz\Core\Config;
 use Lalaz\Http\Request;
-use Lalaz\Http\FlashMessage;
+use Lalaz\Http\Concerns\FlashMessage;
 use Lalaz\View\ViewContext;
 
 /**

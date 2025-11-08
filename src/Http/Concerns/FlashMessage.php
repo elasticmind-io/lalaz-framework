@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Lalaz\Http;
+namespace Lalaz\Http\Concerns;
 
 /**
  * Trait FlashMessage

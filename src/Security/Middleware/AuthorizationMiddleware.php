@@ -5,7 +5,7 @@ namespace Lalaz\Security\Middleware;
 use Lalaz\Http\Request;
 use Lalaz\Http\Response;
 use Lalaz\Http\Middleware;
-use Lalaz\Security\Authorizable;
+use Lalaz\Security\Concerns\Authorizable;
 use Lalaz\Exceptions\HttpException;
 
 /**

@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Lalaz\Security;
+namespace Lalaz\Security\Concerns;
 
 /**
  * Trait Authorizable

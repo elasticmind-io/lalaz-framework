@@ -1,9 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Lalaz\Security;
+namespace Lalaz\Security\Concerns;
 
 use Lalaz\Http\SessionManager;
 use Lalaz\Data\Query\Expressions;
+use Lalaz\Security\Concerns\PasswordHash;
 
 /**
  * Trait Authenticable
