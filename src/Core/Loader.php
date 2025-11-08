@@ -53,6 +53,10 @@ class Loader
     public static function loadAppConfiguration()
     {
         $path = Lalaz::appDirectory() . '/Config';
+        if (!is_dir($path)) {
+            return;
+        }
+
         self::loadFiles($path);
     }
 }

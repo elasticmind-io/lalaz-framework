@@ -14,6 +14,6 @@ if (!function_exists('env'))
 {
     function env($key, $defaultValue = null)
     {
-        return Config::set($key, $defaultValue);
+        return Config::get($key, $defaultValue);
     }
 }

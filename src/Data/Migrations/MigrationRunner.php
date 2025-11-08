@@ -3,10 +3,9 @@
 namespace Lalaz\Data\Migrations;
 
 use Lalaz\Lalaz;
-use Lalaz\Core\Generators\GeneratorEngine;
 use Lalaz\Data\DatabaseHelper;
-use Lalaz\Data\Schema\SchemaBuilder;
 use Lalaz\Data\Schema\Blueprint;
+use Lalaz\Data\Schema\SchemaBuilder;
 
 /**
  * Class MigrationRunner
@@ -69,7 +68,6 @@ class MigrationRunner
     {
         try {
             $tableName = static::$migrationsTableName;
-            // ✅ SECURITY: Use DatabaseHelper to quote identifier
             $sql = DatabaseHelper::buildTableExistsCheck($tableName);
             Lalaz::db()->query($sql);
             return true;
@@ -88,7 +86,6 @@ class MigrationRunner
     private static function getExecutedMigrations(): array
     {
         $tableName = static::$migrationsTableName;
-        // ✅ SECURITY: Use DatabaseHelper to quote identifier
         $quotedTable = DatabaseHelper::quoteIdentifier($tableName);
 
         $executed = [];
@@ -111,7 +108,6 @@ class MigrationRunner
     private static function getNextBatch(): int
     {
         $tableName = static::$migrationsTableName;
-        // ✅ SECURITY: Use DatabaseHelper to quote identifier
         $quotedTable = DatabaseHelper::quoteIdentifier($tableName);
 
         try {
@@ -136,7 +132,6 @@ class MigrationRunner
     private static function logMigration(string $migrationClass, int $batch): void
     {
         $tableName = static::$migrationsTableName;
-        // ✅ SECURITY: Use DatabaseHelper to quote identifier
         $quotedTable = DatabaseHelper::quoteIdentifier($tableName);
 
         $stmt = Lalaz::db()->prepare(
@@ -264,36 +259,5 @@ class MigrationRunner
         }
 
         echo "All migrations have been reset.\n";
-    }
-
-    /**
-     * Generates a new migration file with the given name.
-     *
-     * @param string $migrationName The name of the migration to create.
-     * @return void
-     */
-    public static function generate(string $migrationName): void
-    {
-        $className = ucfirst($migrationName);
-        $directory = static::$migrationsFolder;
-
-        if (!is_dir($directory)) {
-            mkdir($directory, 0755, true);
-            echo "Directory '$directory' created.\n";
-        }
-
-        $timestamp = date('Ymd_His');
-        $filename = "{$directory}/{$timestamp}_{$className}.php";
-
-        // Pass both required parameters to GeneratorEngine
-        $engine = new GeneratorEngine('migration.tpl', $filename);
-        $engine->setVariables([
-            'className' => $className
-        ]);
-
-        // generate() saves the file directly (returns void)
-        $engine->generate();
-
-        echo "Migration created: {$filename}\n";
     }
 }

@@ -51,7 +51,7 @@ class Config
 
             return;
         }
-        
+
         if ($forceReload || self::shouldReload($envFile)) {
             if (is_file($envFile)) {
                 $file = new \SplFileObject($envFile);
@@ -123,17 +123,22 @@ class Config
     /**
      * Sets the value of a specified environment variable.
      *
-     * @param string $key The name of the environment variable to retrieve.
-     * @param mixed $default The default value to return if the variable is not found (default: null).
+    * Updates the cached configuration and the global $_ENV array.
+    *
+    * @param string $key The name of the environment variable to set.
+    * @param mixed $value The value to be stored.
      * @return mixed
      */
-    public static function set(string $key, mixed $value = null): mixed
+    public static function set(string $key, mixed $value): mixed
     {
-        if (!isset($_ENV[$key])) {
-            return self::$env[$key] = $_ENV[$key] = $value;
+        if (self::$env === null) {
+            self::$env = [];
         }
 
-        return self::$env[$key] = $_ENV[$key];
+        $_ENV[$key] = $value;
+        self::$env[$key] = $value;
+
+        return $value;
     }
 
     /**
@@ -221,7 +226,7 @@ class Config
      */
     public static function isDebug(): bool
     {
-        return (bool) self::get('APP_DEBUG');
+        return self::getTyped('APP_DEBUG', false, 'bool');
     }
 
     /**

@@ -145,9 +145,20 @@ class Cli
                 break;
 
             case 'serve':
-                $port = $args[2] ?? '8080';
-                $phpServerCmd = "php -S localhost:$port";
-                $viteCmd = "npm run watch";
+                $requestedPort = $args[2] ?? '8080';
+                $port = filter_var(
+                    $requestedPort,
+                    FILTER_VALIDATE_INT,
+                    ['options' => ['min_range' => 1, 'max_range' => 65535]]
+                );
+
+                if ($port === false) {
+                    echo "Invalid port provided. Please use an integer between 1 and 65535.\n";
+                    exit(1);
+                }
+
+                $phpServerCmd = sprintf('php -S %s', escapeshellarg("localhost:{$port}"));
+                $viteCmd = 'npm run watch';
                 $fullCommand = sprintf('(%s & %s)', $phpServerCmd, $viteCmd);
                 passthru($fullCommand);
                 echo "Server running on port {$port}\n";
@@ -207,6 +218,11 @@ class Cli
     {
         $router = Lalaz::router();
         $routes = $router->getRoutes();
+
+        if (empty($routes)) {
+            echo "No routes have been registered.\n";
+            return;
+        }
 
         // Calculate column widths based on the longest content in each column
         $methodWidth = max(array_map(fn($route) => strlen($route->getMethod()), $routes));
