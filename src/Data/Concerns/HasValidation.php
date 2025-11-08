@@ -4,6 +4,16 @@ namespace Lalaz\Data\Concerns;
 
 use Lalaz\Lalaz;
 
+/**
+ * Trait HasValidation
+ *
+ * Provides comprehensive validation functionality for ActiveRecord models,
+ * including validation rules for common data types, formats, and constraints.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
+ */
 trait HasValidation
 {
     // Validation rule constants

@@ -4,6 +4,16 @@ namespace Lalaz\Data\Concerns;
 
 use Lalaz\Data\Relation;
 
+/**
+ * Trait HasRelationships
+ *
+ * Provides relationship functionality for ActiveRecord models,
+ * supporting hasMany, belongsTo, and other common relationship types.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
+ */
 trait HasRelationships
 {
     /**

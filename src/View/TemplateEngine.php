@@ -6,6 +6,16 @@ use Lalaz\View\Contracts\TemplateEngineInterface;
 use Lalaz\View\Providers\TwigTemplateEngine;
 use Lalaz\View\Providers\BladeTemplateEngine;
 
+/**
+ * Class TemplateEngine
+ *
+ * Provides a unified interface for managing template engines in the application.
+ * Supports multiple template providers (Twig, Blade) configured via environment.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
+ */
 class TemplateEngine
 {
     private static ?TemplateEngineInterface $engine = null;

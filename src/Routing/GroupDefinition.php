@@ -2,6 +2,16 @@
 
 namespace Lalaz\Routing;
 
+/**
+ * Class GroupDefinition
+ *
+ * Represents a group of routes with common properties such as prefix and middleware.
+ * Provides a fluent interface for defining grouped routes in the application.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
+ */
 class GroupDefinition
 {
     /** @var RouteDefinition[] $routes The routes that are part of this group */
