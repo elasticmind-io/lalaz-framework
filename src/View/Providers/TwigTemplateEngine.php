@@ -3,10 +3,11 @@
 namespace Lalaz\View\Providers;
 
 use Lalaz\Lalaz;
-use Lalaz\View\Utils;
+use Lalaz\View\ViewHelpers;
 use Lalaz\View\Contracts\TemplateEngineInterface;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
+use Twig\TwigFunction;
 
 class TwigTemplateEngine implements TemplateEngineInterface
 {
@@ -31,15 +32,20 @@ class TwigTemplateEngine implements TemplateEngineInterface
     /**
      * Attaches utility functions to the Twig environment.
      *
-     * This method adds custom utility functions like flash messages and route URLs
-     * to the Twig environment, allowing them to be used in view templates.
+     * This method converts framework-agnostic ViewHelpers to Twig-specific functions
+     * and adds them to the Twig environment, allowing them to be used in view templates.
      *
      * @return void
      */
     private function attachUtilFunctions(): void
     {
-        foreach (Utils::all() as $util) {
-            $this->twig->addFunction($util);
+        foreach (ViewHelpers::all() as $helper) {
+            // Convert framework ViewFunction to Twig TwigFunction
+            $this->twig->addFunction(new TwigFunction(
+                $helper->getName(),
+                $helper->getCallable(),
+                $helper->getOptions()
+            ));
         }
     }
 
