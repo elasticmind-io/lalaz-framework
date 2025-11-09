@@ -135,6 +135,14 @@ class Cli
                 static::routes();
                 break;
 
+            case 'route:cache':
+                static::routeCache();
+                break;
+
+            case 'route:cache-clear':
+                static::routeCacheClear();
+                break;
+
             case 'middlewares':
                 static::showMiddlewaresForRoute((int)$name);
                 break;
@@ -199,6 +207,8 @@ class Cli
         echo "  jobs:once               - Run the job queue once\n";
         echo "  jobs:run                - Run the job queue continuously\n";
         echo "  routes                  - Display all registered routes\n";
+        echo "  route:cache             - Compile routes for production optimization\n";
+        echo "  route:cache-clear       - Clear compiled route cache\n";
         echo "  serve [port]            - Serve the application with Vite and PHP\n";
         echo "  test                    - Run PHPUnit tests\n";
         echo "  help                    - Display this help message\n";
@@ -254,6 +264,67 @@ class Cli
         }
 
         echo str_repeat('-', $separatorWidth) . "\n";
+    }
+
+    /**
+     * Generate route cache file for production optimization.
+     *
+     * @return void
+     */
+    private static function routeCache(): void
+    {
+        echo "🔄 Compiling routes...\n";
+
+        try {
+            $router = Lalaz::router();
+            $routes = $router->getRoutes();
+
+            if (empty($routes)) {
+                echo "⚠️  No routes to cache. Please ensure routes are registered.\n";
+                return;
+            }
+
+            // Default cache path
+            $cacheFile = __DIR__ . '/../../storage/cache/routes.php';
+            $router->setCacheFile($cacheFile);
+
+            if ($router->saveToCache()) {
+                $count = count($routes);
+                echo "✅ Router cache created successfully!\n";
+                echo "📁 Cache file: {$cacheFile}\n";
+                echo "📊 Cached {$count} route(s)\n";
+                echo "\n";
+                echo "💡 Tip: Enable route caching by setting ROUTE_CACHE_ENABLED=true in your .env file\n";
+            } else {
+                echo "❌ Failed to create route cache.\n";
+            }
+        } catch (\Throwable $e) {
+            echo "❌ Error: " . $e->getMessage() . "\n";
+        }
+    }
+
+    /**
+     * Clear the route cache file.
+     *
+     * @return void
+     */
+    private static function routeCacheClear(): void
+    {
+        echo "🔄 Clearing route cache...\n";
+
+        try {
+            $cacheFile = __DIR__ . '/../../storage/cache/routes.php';
+
+            if (file_exists($cacheFile)) {
+                unlink($cacheFile);
+                echo "✅ Route cache cleared successfully!\n";
+                echo "📁 Removed: {$cacheFile}\n";
+            } else {
+                echo "ℹ️  No route cache file found.\n";
+            }
+        } catch (\Throwable $e) {
+            echo "❌ Error: " . $e->getMessage() . "\n";
+        }
     }
 
     private static function showMiddlewaresForRoute(int $routeIndex): void
