@@ -1,10 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Lalaz\Http;
+namespace Lalaz\Exceptions;
 
-use Lalaz\Exceptions\HttpException;
-use Lalaz\Exceptions\ValidationException;
-use Lalaz\Exceptions\FrameworkException;
+use Lalaz\Http\Request;
 use Lalaz\View\View;
 
 /**

@@ -2,14 +2,12 @@
 
 namespace Lalaz;
 
-use \Throwable;
 use \RuntimeException;
-
 use Lalaz\Core\Loader;
 use Lalaz\Core\Config;
 use Lalaz\Data\Database;
 use Lalaz\Data\Adapters\ConnectionAdapterResolver;
-use Lalaz\Event\EventHub;
+use Lalaz\Events\EventHub;
 use Lalaz\Logging\Logger;
 use Lalaz\Logging\LogToConsole;
 use Lalaz\Routing\Router;
@@ -74,8 +72,6 @@ class Lalaz
         self::$instance->router = static::initializeRouter();
         self::$instance->events = static::initializeEventHub();
         self::$instance->db = static::initializeDb();
-
-        static::configureRoutes();
 
         return self::$instance;
     }
@@ -165,23 +161,6 @@ class Lalaz
     {
         debug('Initializing App EventHub');
         return new EventHub();
-    }
-
-    /**
-     * Configures the application routes by calling a user-defined function.
-     *
-     * If a function called `onRouterInitialized` exists, it is executed to allow
-     * custom route definitions.
-     *
-     * @return void
-     */
-    private static function configureRoutes(): void
-    {
-        debug('Configuring App Routes');
-
-        if (function_exists('onRouterInitialized')) {
-            onRouterInitialized();
-        }
     }
 
     /**

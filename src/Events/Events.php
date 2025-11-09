@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Lalaz\Event;
+namespace Lalaz\Events;
 
 use Lalaz\Lalaz;
 

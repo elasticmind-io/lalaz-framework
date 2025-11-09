@@ -11,7 +11,7 @@ use Exception;
  *
  * @package elasticmind\lalaz-framework
  */
-class ApiClientException extends Exception
+class HttpClientException extends Exception
 {
     /**
      * @var int|null The HTTP status code if available.

@@ -2,7 +2,7 @@
 
 namespace Lalaz\Core\Generators;
 
-use Lalaz\IO\Directory;
+use Lalaz\Support\Directory;
 use InvalidArgumentException;
 
 /**
@@ -264,29 +264,29 @@ class GeneratorEngine
     }
 
     /**
-     * Generates a presenter file based on the given name.
+     * Generates a form file based on the given name.
      *
-     * @param string $name The name of the presenter to generate.
+     * @param string $name The name of the form to generate.
      * @return void
      */
-    public static function presenter($name): void
+    public static function form($name): void
     {
         $parsed = self::parseNameAndNamespace($name);
 
-        $outputFilePath = './src/App/Models/Presenters/'
+        $outputFilePath = './src/App/Models/Forms/'
             . $parsed['directory'] . $parsed['className']
-            . 'Presenter.php';
+            . 'Form.php';
 
         $engine = new GeneratorEngine(
-            'presenter.tpl',
+            'form.tpl',
             $outputFilePath
         );
 
         $engine->setVariables([
             'name' => $parsed['className'],
             'namespace' => $parsed['namespace']
-                ? 'App\\Models\\Presenters\\' . $parsed['namespace']
-                : 'App\\Models\\Presenters'
+                ? 'App\\Models\\Forms\\' . $parsed['namespace']
+                : 'App\\Models\\Forms'
         ]);
 
         $engine->generate();

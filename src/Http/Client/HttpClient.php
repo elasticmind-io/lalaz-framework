@@ -14,7 +14,7 @@ use Lalaz\Http\Contracts\HttpTransportInterface;
  *
  * @package elasticmind\lalaz-framework
  */
-class ApiClient
+class HttpClient
 {
     /**
      * @var string The base URL for the API requests.

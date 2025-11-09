@@ -21,11 +21,10 @@ class TextFormatter implements FormatterInterface
      * Formats the log message as a text string.
      *
      * Constructs a log string containing the timestamp (formatted as 'Y-m-d H:i:s'),
-     * log level, main message, and JSON-encoded context. The log level is converted
-     * to uppercase for better readability. If the context is not empty, it will be
-     * appended to the message as a JSON string.
+     * log level, main message, and JSON-encoded context (if not empty). The log level
+     * is converted to uppercase for better readability.
      *
-     * @param string $level The log level (e.g., 'info', 'error', 'debug').
+     * @param string $level The log level (e.g., 'info', 'error', 'debug', 'warning').
      * @param string $message The main message to be logged.
      * @param array $context Additional context data that provides more information
      *                       about the log entry, such as exception details, user information, etc.
@@ -34,12 +33,14 @@ class TextFormatter implements FormatterInterface
      */
     public function format(string $level, string $message, array $context = []): string
     {
+        $contextStr = empty($context) ? '' : ' ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
         return sprintf(
-            "[%s] %s: %s %s",
+            "[%s] %s: %s%s",
             date('Y-m-d H:i:s'),
             strtoupper($level),
             $message,
-            json_encode($context)
+            $contextStr
         );
     }
 }

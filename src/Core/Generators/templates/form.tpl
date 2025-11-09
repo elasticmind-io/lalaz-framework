@@ -2,9 +2,9 @@
 
 namespace {{namespace}};
 
-use Lalaz\Data\Model;
+use Lalaz\Validation\Validatable;
 
-class {{name}}Presenter extends Model
+class {{name}}Form extends Validatable
 {
     protected function validates(): array
     {

@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Lalaz\Event;
+namespace Lalaz\Events;
 
-use Lalaz\Event\Events;
+use Lalaz\Events\Events;
 use Lalaz\Queue\Job;
 
 /**

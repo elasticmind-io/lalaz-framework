@@ -3,7 +3,7 @@
 namespace Lalaz\Storage\Adapters;
 
 use Exception;
-use Lalaz\IO\Directory;
+use Lalaz\Support\Directory;
 use Lalaz\Storage\Contracts\StorageInterface;
 
 /**
@@ -106,6 +106,6 @@ class LocalStorageAdapter implements StorageInterface
         $extension = isset($pathInfo['extension']) ? '.' . $pathInfo['extension'] : '';
         $uniqueName = str_replace('.', 'ts', uniqid('', true));
 
-        return "{$subPath}${uniqueName}{$extension}";
+        return "{$subPath}{$uniqueName}{$extension}";
     }
 }

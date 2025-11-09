@@ -12,7 +12,7 @@ namespace Lalaz\Http\Client;
  * @author  Elasticmind <ola@elasticmind.io>
  * @link    https://lalaz.dev
  */
-class ApiResponse
+class HttpResponse
 {
     /**
      * @var int The HTTP status code of the API response.

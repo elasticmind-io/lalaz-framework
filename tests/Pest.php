@@ -42,3 +42,11 @@ uses()
         $_ENV['QUEUE_PROVIDER'] = 'in-memory';
     })
     ->in('Unit/Queue');
+
+uses()
+    ->beforeEach(function() {
+        // Prevent database initialization for Logging facade tests
+        putenv('DB_PROVIDER=none');
+        $_ENV['DB_PROVIDER'] = 'none';
+    })
+    ->in('Unit/Logging');

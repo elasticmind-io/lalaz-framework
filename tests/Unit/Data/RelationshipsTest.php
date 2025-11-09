@@ -243,7 +243,7 @@ function resetRelationshipTestStubs(): void
 
 if (!class_exists('RelationshipTestModel')) {
     #[\AllowDynamicProperties]
-    abstract class RelationshipTestModel extends \Lalaz\Data\Model
+    abstract class RelationshipTestModel extends \Lalaz\Data\ActiveRecord
     {
         use \Lalaz\Data\Concerns\HasRelationships;
         use \Lalaz\Data\Concerns\DatabaseReadable;

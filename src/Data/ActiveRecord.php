@@ -5,6 +5,9 @@ namespace Lalaz\Data;
 use Exception;
 
 use Lalaz\Lalaz;
+use Lalaz\Validation\Concerns\Serializable;
+use Lalaz\Validation\Concerns\HasValidation;
+use Lalaz\Validation\Concerns\HasAttributes;
 use Lalaz\Data\Concerns\Presentable;
 use Lalaz\Data\Concerns\DatabaseQueryable;
 use Lalaz\Data\Concerns\DatabaseReadable;
@@ -23,14 +26,20 @@ use Lalaz\Data\Concerns\HasFillableAttributes;
  * @author  Elasticmind <ola@elasticmind.io>
  * @link     https://lalaz.dev
  */
-abstract class ActiveRecord extends Model
+abstract class ActiveRecord
 {
+    use Serializable;
+    use HasValidation;
+    use HasAttributes;
     use Presentable;
     use DatabaseQueryable;
     use DatabaseReadable;
     use DatabaseWritable;
     use HasRelationships;
     use HasFillableAttributes;
+
+    /** @var array The attributes that should be hidden for serialization. */
+    protected array $hidden = [];
 
     /** @var array The attributes that should be cast to native types. */
     protected array $casts = [];

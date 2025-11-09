@@ -1,7 +1,7 @@
 <?php
 
 use Lalaz\Data\Concerns\DatabaseReadable;
-use Lalaz\Data\Model;
+use Lalaz\Data\ActiveRecord;
 use Lalaz\Data\PagedResult;
 use Lalaz\Data\Query\Expressions;
 use Lalaz\Data\Query\SelectQueryBuilder;
@@ -178,7 +178,7 @@ if (!class_exists('FakePDOStatementForReadableTests')) {
 }
 
 if (!class_exists('DatabaseReadableTestModel')) {
-    class DatabaseReadableTestModel extends Model
+    class DatabaseReadableTestModel extends ActiveRecord
     {
         use DatabaseReadable;
 

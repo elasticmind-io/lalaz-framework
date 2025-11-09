@@ -56,14 +56,9 @@ class Cli
                 echo "Model {$name} created successfully!\n";
                 break;
 
-            case 'g:entity':
-                GeneratorEngine::entity($name);
-                echo "Entity {$name} created successfully!\n";
-                break;
-
-            case 'g:presenter':
-                GeneratorEngine::presenter($name);
-                echo "Presenter {$name} created successfully!\n";
+            case 'g:form':
+                GeneratorEngine::form($name);
+                echo "Form {$name} created successfully!\n";
                 break;
 
             case 'g:migration':

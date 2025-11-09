@@ -13,7 +13,7 @@ use Lalaz\Http\Contracts\HttpTransportInterface;
  *
  * @package elasticmind\lalaz-framework
  */
-class ApiClientBuilder
+class HttpClientBuilder
 {
     /**
      * @var string
@@ -135,13 +135,13 @@ class ApiClientBuilder
     }
 
     /**
-     * Finalizes the configuration and returns the ApiClient instance.
+     * Finalizes the configuration and returns the HttpClient instance.
      *
-     * @return ApiClient
+     * @return HttpClient
      */
-    public function build(): ApiClient
+    public function build(): HttpClient
     {
-        return new ApiClient(
+        return new HttpClient(
             $this->baseUrl,
             $this->transport ?? new CurlTransport(),
             $this->options,

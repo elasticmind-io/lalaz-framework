@@ -50,6 +50,8 @@ trait Authenticable
      * This method looks up the user by the username and verifies the password
      * using the PasswordHash trait's verification logic.
      *
+     * Security: Regenerates session ID after successful login to prevent session fixation attacks.
+     *
      * @param string $username The username to authenticate.
      * @param string $password The password to authenticate.
      *
@@ -72,6 +74,9 @@ trait Authenticable
         if (!$isValidPassword) {
             return false;
         }
+
+        // Security: Regenerate session ID to prevent session fixation attacks
+        SessionManager::regenerate();
 
         SessionManager::set(static::$userSessionKey, $user);
 

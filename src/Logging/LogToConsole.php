@@ -7,8 +7,8 @@ use Lalaz\Logging\Contracts\LoggerWriterInterface;
 /**
  * Class LogToConsole
  *
- * This class implements the ILoggerWriter interface to output log messages to the console.
- * It writes messages directly to the standard input stream (stdin).
+ * Efficiently writes log messages to the console (stdout).
+ * Uses a persistent stream handle for better performance.
  *
  * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
@@ -16,6 +16,21 @@ use Lalaz\Logging\Contracts\LoggerWriterInterface;
  */
 final class LogToConsole implements LoggerWriterInterface
 {
+    /** @var resource|null The output stream handle */
+    private $stream = null;
+
+    /**
+     * Constructor - opens the stdout stream.
+     */
+    public function __construct()
+    {
+        $this->stream = fopen('php://stdout', 'w');
+
+        if (!$this->stream) {
+            throw new \RuntimeException('Failed to open stdout stream for logging');
+        }
+    }
+
     /**
      * Writes a message to the console.
      *
@@ -24,11 +39,19 @@ final class LogToConsole implements LoggerWriterInterface
      */
     public function write(string $message): void
     {
-        $stream = fopen('php://stdout', 'w');
+        if ($this->stream) {
+            fwrite($this->stream, $message . PHP_EOL);
+        }
+    }
 
-        if ($stream && is_resource($stream)) {
-            fputs($stream, $message . PHP_EOL);
-            fclose($stream);
+    /**
+     * Destructor - closes the stream handle.
+     */
+    public function __destruct()
+    {
+        if ($this->stream) {
+            fclose($this->stream);
+            $this->stream = null;
         }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace {{namespace}};
 
-use Lalaz\Event\EventListener;
+use Lalaz\Events\EventListener;
 
 class {{name}}Event extends EventListener
 {

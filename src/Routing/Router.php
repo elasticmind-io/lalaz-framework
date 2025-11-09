@@ -6,13 +6,27 @@ use Lalaz\Http\Request;
 use Lalaz\Http\Response;
 use Lalaz\View\View;
 use Lalaz\Exceptions\FrameworkException;
-use Lalaz\Http\ExceptionHandler;
+use Lalaz\Exceptions\ExceptionHandler;
 
 /**
  * Class Router
  *
- * This class handles the routing of HTTP requests to controllers and methods within the application.
- * It supports various HTTP methods and middleware integration, providing a flexible system for defining routes.
+ * HTTP request routing system that maps URLs to controllers and methods.
+ * Supports various HTTP methods, middleware integration, and route grouping,
+ * providing a flexible system for defining application routes.
+ *
+ * Example usage:
+ * ```php
+ * // Configure routes on initialization
+ * Router::onInitialized(function($router) {
+ *     $router->get('/', [HomeController::class, 'index']);
+ *     $router->post('/users', [UserController::class, 'store']);
+ *
+ *     $router->group('/api', function($router) {
+ *         $router->get('/users', [ApiController::class, 'users']);
+ *     });
+ * });
+ * ```
  *
  * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
@@ -28,6 +42,23 @@ class Router
 
     /** @var string|null $prefix Stores the route prefix for groups */
     protected ?string $prefix = null;
+
+    /**
+     * Initialization callback to be executed when Router is constructed.
+     *
+     * @var \Closure|null
+     */
+    private static ?\Closure $initializationCallback = null;
+
+    /**
+     * Router constructor.
+     *
+     * Initializes the router and executes any registered initialization callbacks.
+     */
+    public function __construct()
+    {
+        $this->emitInitializationEvent();
+    }
 
     /**
      * Get all registered routes.
@@ -340,5 +371,52 @@ class Router
         }
 
         return false;
+    }
+
+    /**
+     * Execute the initialization callback if one is registered.
+     *
+     * This method is called automatically during construction and invokes
+     * the static initialization callback if it has been set via onInitialized().
+     *
+     * @return void
+     * @see Router::onInitialized()
+     */
+    private function emitInitializationEvent(): void
+    {
+        if (self::$initializationCallback !== null) {
+            (self::$initializationCallback)($this);
+        }
+    }
+
+    /**
+     * Set a callback to execute when Router is instantiated.
+     *
+     * This provides a hook for configuring routes before the Router is used.
+     * The callback receives the Router instance as its only parameter, allowing
+     * registration of routes during initialization.
+     *
+     * This method should be called early in your application bootstrap, before
+     * the Router is instantiated (typically in bootstrap.php or Lalaz::initialize()).
+     *
+     * @param \Closure $callback A closure that receives the Router instance: function(Router $router): void
+     * @return void
+     *
+     * @example
+     * ```php
+     * // In bootstrap.php or before Lalaz::initialize()
+     * Router::onInitialized(function(Router $router) {
+     *     $router->get('/', [HomeController::class, 'index']);
+     *     $router->post('/users', [UserController::class, 'store']);
+     *
+     *     $router->group('/api', function($router) {
+     *         $router->get('/users', [ApiController::class, 'list']);
+     *     });
+     * });
+     * ```
+     */
+    public static function onInitialized(\Closure $callback): void
+    {
+        self::$initializationCallback = $callback;
     }
 }
