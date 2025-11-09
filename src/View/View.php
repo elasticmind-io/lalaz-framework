@@ -64,7 +64,7 @@ class View
      *
      * @return void
      */
-    public static function renderError(array $data = [], Throwable $exception = null): void
+    public static function renderError(array $data = [], ?Throwable $exception = null): void
     {
         if (ob_get_length()) {
             ob_clean();

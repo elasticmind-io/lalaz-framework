@@ -35,7 +35,7 @@ afterEach(function () {
     if (file_exists($this->envFile)) {
         unlink($this->envFile);
     }
-    
+
     // Clear cache
     Config::clearCache();
 });test('config cache is disabled by default', function () {
