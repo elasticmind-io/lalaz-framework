@@ -4,7 +4,6 @@ namespace Lalaz\View;
 
 use Lalaz\Http\Concerns\FlashMessage;
 use Lalaz\Security\CsrfProtection;
-use Twig\Environment;
 use Twig\TwigFunction;
 
 /**

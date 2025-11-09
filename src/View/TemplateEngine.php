@@ -3,8 +3,6 @@
 namespace Lalaz\View;
 
 use Lalaz\View\Contracts\TemplateEngineInterface;
-use Lalaz\View\Providers\TwigTemplateEngine;
-use Lalaz\View\Providers\BladeTemplateEngine;
 
 /**
  * Class TemplateEngine
