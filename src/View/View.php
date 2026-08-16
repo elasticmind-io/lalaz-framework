@@ -81,14 +81,18 @@ class View
      *
      * @return void
      */
-    public static function renderError(array $data = [], ?Throwable $exception = null): void
+    public static function renderError(
+        array $data = [],
+        ?Throwable $exception = null,
+        int $statusCode = 500
+    ): void
     {
         if (ob_get_length()) {
             ob_clean();
         }
 
         if (Config::isDevelopment() || Config::isDebug()) {
-            static::renderDevelopmentError($exception);
+            static::renderDevelopmentError($exception, $statusCode);
             return;
         }
 
@@ -96,16 +100,16 @@ class View
             static::renderJson([
                 'status' => 'error',
                 'message' => 'An unexpected error occurred. Please try again later.'
-            ], 500);
+            ], $statusCode);
 
             return;
         }
 
-        http_response_code(500);
+        http_response_code($statusCode);
         echo static::render('errors/500', $data);
     }
 
-    private static function renderDevelopmentError(Throwable $exception): void
+    private static function renderDevelopmentError(Throwable $exception, int $statusCode = 500): void
     {
         if (Request::isJsonRequest()) {
             static::renderJson([
@@ -119,7 +123,7 @@ class View
             return;
         }
 
-        http_response_code(500);
+        http_response_code($statusCode);
         echo "<h1>Development Error</h1>";
         echo "<p><strong>Message:</strong> " . htmlspecialchars($exception->getMessage()) . "</p>";
         echo "<p><strong>File:</strong> " . htmlspecialchars($exception->getFile()) . "</p>";

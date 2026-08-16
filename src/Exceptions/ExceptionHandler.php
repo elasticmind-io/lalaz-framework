@@ -58,7 +58,10 @@ class ExceptionHandler
                 'statusCode' => $e->getStatusCode(),
                 'context' => $e->getContext(),
             ];
-            View::renderError($data, $e);
+            // com o status da propria excecao: renderError fixava 500 e
+            // achatava todo 4xx tipado — um CSRF recusado saia como 500,
+            // que le como 'o servidor quebrou' em vez de 'refaca o envio'
+            View::renderError($data, $e, $e->getStatusCode());
         }
     }
 
