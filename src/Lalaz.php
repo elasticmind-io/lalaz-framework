@@ -2,14 +2,12 @@
 
 namespace Lalaz;
 
-use \Throwable;
 use \RuntimeException;
-
 use Lalaz\Core\Loader;
 use Lalaz\Core\Config;
 use Lalaz\Data\Database;
-use Lalaz\Data\Adapters\ConnectionAdaterResolver;
-use Lalaz\Event\EventHub;
+use Lalaz\Data\Adapters\ConnectionAdapterResolver;
+use Lalaz\Events\EventHub;
 use Lalaz\Logging\Logger;
 use Lalaz\Logging\LogToConsole;
 use Lalaz\Routing\Router;
@@ -155,23 +153,14 @@ class Lalaz
             ->writeTo(new LogToConsole());
     }
 
-    private static function initializeRouter(): Router
-    {
-        debug('Initializing App Router');
-        return new Router();
-    }
-
-    private static function initializeEventHub(): EventHub
-    {
-        debug('Initializing App EventHub');
-        return new EventHub();
-    }
-
     /**
-     * Configures the application routes by calling a user-defined function.
+     * Da a aplicacao a chance de registrar as rotas dela.
      *
-     * If a function called `onRouterInitialized` exists, it is executed to allow
-     * custom route definitions.
+     * O gancho foi removido em algum ponto da develop e nada ocupou o lugar: a
+     * varredura de atributos do Router cobre outro caso de uso, nao este. Toda
+     * aplicacao que declara rotas em Config/routes.php via onRouterInitialized()
+     * — o esqueleto padrao do framework — passava a subir com ZERO rota, e cada
+     * pagina respondia 404 sem nenhum erro que apontasse a causa.
      *
      * @return void
      */
@@ -182,6 +171,18 @@ class Lalaz
         if (function_exists('onRouterInitialized')) {
             onRouterInitialized();
         }
+    }
+
+    private static function initializeRouter(): Router
+    {
+        debug('Initializing App Router');
+        return new Router();
+    }
+
+    private static function initializeEventHub(): EventHub
+    {
+        debug('Initializing App EventHub');
+        return new EventHub();
     }
 
     /**
@@ -196,7 +197,7 @@ class Lalaz
     private static function initializeDb(): Database
     {
         debug('Resolving database adapter...');
-        $adapter = ConnectionAdaterResolver::resolve();
+        $adapter = ConnectionAdapterResolver::resolve();
         return new Database($adapter);
     }
 

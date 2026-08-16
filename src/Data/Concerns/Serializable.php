@@ -2,6 +2,16 @@
 
 namespace Lalaz\Data\Concerns;
 
+/**
+ * Trait Serializable
+ *
+ * Provides serialization functionality for ActiveRecord models,
+ * allowing models to be converted to arrays and JSON format.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
+ */
 trait Serializable
 {
     /**

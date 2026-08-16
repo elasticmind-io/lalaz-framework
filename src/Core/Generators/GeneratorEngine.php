@@ -2,7 +2,8 @@
 
 namespace Lalaz\Core\Generators;
 
-use Lalaz\IO\Directory;
+use Lalaz\Support\Directory;
+use InvalidArgumentException;
 
 /**
  * Class GeneratorEngine
@@ -89,12 +90,29 @@ class GeneratorEngine
      */
     public static function parseNameAndNamespace($name)
     {
-        $pathParts = explode('/', $name);
+        $normalized = str_replace('\\', '/', trim($name));
 
-        $className = array_pop($pathParts);
-        $className = ucwords($className);
+        if ($normalized === '') {
+            throw new InvalidArgumentException('Generator name cannot be empty.');
+        }
 
-        $namespace = implode('\\', array_map('ucwords', $pathParts));
+        if (str_contains($normalized, '..')) {
+            throw new InvalidArgumentException('Generator name cannot contain directory traversal sequences.');
+        }
+
+        if (!preg_match('/^[A-Za-z0-9_\/]+$/', $normalized)) {
+            throw new InvalidArgumentException('Generator name may only contain letters, numbers, underscores, and forward slashes.');
+        }
+
+        $pathParts = array_values(array_filter(explode('/', $normalized), 'strlen'));
+
+        if (empty($pathParts)) {
+            throw new InvalidArgumentException('Generator name must contain at least one segment.');
+        }
+
+    $className = self::toStudly(array_pop($pathParts));
+    $namespaceParts = array_map([self::class, 'toStudly'], $pathParts);
+        $namespace = implode('\\', $namespaceParts);
 
         return [
             'className' => $className,
@@ -169,7 +187,7 @@ class GeneratorEngine
      */
     public static function migration($name): void
     {
-        $className = ucwords($name);
+        $className = self::sanitizeMigrationName($name);
 
         $timestamp = date('Ymd_His');
         $filename = "./src/Database/Migrations/{$timestamp}_{$className}.php";
@@ -246,29 +264,29 @@ class GeneratorEngine
     }
 
     /**
-     * Generates a presenter file based on the given name.
+     * Generates a form file based on the given name.
      *
-     * @param string $name The name of the presenter to generate.
+     * @param string $name The name of the form to generate.
      * @return void
      */
-    public static function presenter($name): void
+    public static function form($name): void
     {
         $parsed = self::parseNameAndNamespace($name);
 
-        $outputFilePath = './src/App/Models/Presenters/'
+        $outputFilePath = './src/App/Models/Forms/'
             . $parsed['directory'] . $parsed['className']
-            . 'Presenter.php';
+            . 'Form.php';
 
         $engine = new GeneratorEngine(
-            'presenter.tpl',
+            'form.tpl',
             $outputFilePath
         );
 
         $engine->setVariables([
             'name' => $parsed['className'],
             'namespace' => $parsed['namespace']
-                ? 'App\\Models\\Presenters\\' . $parsed['namespace']
-                : 'App\\Models\\Presenters'
+                ? 'App\\Models\\Forms\\' . $parsed['namespace']
+                : 'App\\Models\\Forms'
         ]);
 
         $engine->generate();
@@ -340,15 +358,15 @@ class GeneratorEngine
      */
     public static function view($name): void
     {
-        $className = strtolower($name);
+        $relativePath = self::sanitizeViewPath($name);
 
         $engine = new GeneratorEngine(
             'view.tpl',
-            "./src/App/Views/${className}.twig"
+            "./src/App/Views/{$relativePath}.twig"
         );
 
         $engine->setVariables([
-            'name' => $className
+            'name' => basename($relativePath)
         ]);
 
         $engine->generate();
@@ -382,5 +400,59 @@ class GeneratorEngine
         ]);
 
         $engine->generate();
+    }
+
+    private static function sanitizeViewPath(string $name): string
+    {
+        $normalized = str_replace('\\', '/', trim($name));
+
+        if ($normalized === '') {
+            throw new InvalidArgumentException('View name cannot be empty.');
+        }
+
+        if (str_contains($normalized, '..')) {
+            throw new InvalidArgumentException('View name cannot contain directory traversal sequences.');
+        }
+
+        if (!preg_match('/^[A-Za-z0-9_\/]+$/', $normalized)) {
+            throw new InvalidArgumentException('View name may only contain letters, numbers, underscores, and forward slashes.');
+        }
+
+        return strtolower($normalized);
+    }
+
+    private static function sanitizeMigrationName(string $name): string
+    {
+        $trimmed = trim($name);
+
+        if ($trimmed === '') {
+            throw new InvalidArgumentException('Migration name cannot be empty.');
+        }
+
+        if (str_contains($trimmed, '..')) {
+            throw new InvalidArgumentException('Migration name cannot contain directory traversal sequences.');
+        }
+
+        if (!preg_match('/^[A-Za-z0-9_]+$/', $trimmed)) {
+            throw new InvalidArgumentException('Migration name may only contain letters, numbers, and underscores.');
+        }
+
+        return self::toStudly(str_replace('_', ' ', $trimmed));
+    }
+
+    private static function toStudly(string $value): string
+    {
+        $value = str_replace(['-', '_'], ' ', $value);
+        $segments = preg_split('/\s+/', $value, -1, PREG_SPLIT_NO_EMPTY);
+
+        $studly = '';
+
+        foreach ($segments as $segment) {
+            $firstChar = substr($segment, 0, 1);
+            $rest = substr($segment, 1);
+            $studly .= ($firstChar !== false ? strtoupper($firstChar) : '') . ($rest !== false ? $rest : '');
+        }
+
+        return $studly;
     }
 }

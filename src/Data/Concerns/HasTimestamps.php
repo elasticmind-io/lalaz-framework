@@ -2,6 +2,16 @@
 
 namespace Lalaz\Data\Concerns;
 
+/**
+ * Trait HasTimestamps
+ *
+ * Provides automatic timestamp management for ActiveRecord models,
+ * automatically updating created_at and updated_at columns.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
+ */
 trait HasTimestamps
 {
     /**

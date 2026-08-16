@@ -6,7 +6,7 @@ use Throwable;
 use Lalaz\Lalaz;
 use Lalaz\Core\Config;
 use Lalaz\Http\Request;
-use Lalaz\Http\FlashMessage;
+use Lalaz\Http\Concerns\FlashMessage;
 use Lalaz\View\ViewContext;
 
 /**
@@ -47,11 +47,14 @@ class View
     /**
      * Sends a JSON response with the provided data.
      *
+     * Estatico como o resto da classe: renderError a chama com static::, e
+     * chamada estatica de metodo de instancia e fatal no PHP 8.
+     *
      * @param array $data The data to send as JSON.
      * @param int $statusCode The HTTP status code of the response.
      * @return void
      */
-    public function renderJson($data = [], $statusCode = 200): void
+    public static function renderJson(array $data = [], int $statusCode = 200): void
     {
         header('Content-Type: application/json');
         http_response_code($statusCode);
@@ -78,14 +81,18 @@ class View
      *
      * @return void
      */
-    public static function renderError(array $data = [], ?Throwable $exception = null): void
+    public static function renderError(
+        array $data = [],
+        ?Throwable $exception = null,
+        int $statusCode = 500
+    ): void
     {
         if (ob_get_length()) {
             ob_clean();
         }
 
         if (Config::isDevelopment() || Config::isDebug()) {
-            static::renderDevelopmentError($exception);
+            static::renderDevelopmentError($exception, $statusCode);
             return;
         }
 
@@ -93,16 +100,16 @@ class View
             static::renderJson([
                 'status' => 'error',
                 'message' => 'An unexpected error occurred. Please try again later.'
-            ], 500);
+            ], $statusCode);
 
             return;
         }
 
-        http_response_code(500);
+        http_response_code($statusCode);
         echo static::render('errors/500', $data);
     }
 
-    private static function renderDevelopmentError(Throwable $exception): void
+    private static function renderDevelopmentError(Throwable $exception, int $statusCode = 500): void
     {
         if (Request::isJsonRequest()) {
             static::renderJson([
@@ -116,7 +123,7 @@ class View
             return;
         }
 
-        http_response_code(500);
+        http_response_code($statusCode);
         echo "<h1>Development Error</h1>";
         echo "<p><strong>Message:</strong> " . htmlspecialchars($exception->getMessage()) . "</p>";
         echo "<p><strong>File:</strong> " . htmlspecialchars($exception->getFile()) . "</p>";

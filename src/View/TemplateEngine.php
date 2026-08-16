@@ -2,11 +2,34 @@
 
 namespace Lalaz\View;
 
-use Expcetion;
 use Lalaz\View\Contracts\TemplateEngineInterface;
-use Lalaz\View\Providers\TwigTemplateEngine;
-use Lalaz\View\Providers\BladeTemplateEngine;
 
+/**
+ * Class TemplateEngine
+ *
+ * Provides a unified interface for managing template engines in the application.
+ * Supports multiple template providers (Twig, Blade, Plates, etc.) configured via environment.
+ *
+ * Built-in Providers:
+ * - TwigTemplateEngine: Requires "twig/twig:^3.0" to be installed in your project
+ *
+ * Usage:
+ * 1. Install your preferred template engine:
+ *    composer require "twig/twig:^3.0"
+ *
+ * 2. Configure in .env:
+ *    TEMPLATE_PROVIDER=Lalaz\View\Providers\TwigTemplateEngine
+ *
+ * 3. Or create your own provider implementing TemplateEngineInterface:
+ *    TEMPLATE_PROVIDER=App\Providers\MyCustomEngine
+ *
+ * Note: The framework doesn't include template engines as dependencies to remain
+ * flexible and lightweight. Each project installs only what it needs.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
+ */
 class TemplateEngine
 {
     private static ?TemplateEngineInterface $engine = null;
@@ -20,7 +43,7 @@ class TemplateEngine
         $engineProvider = config('TEMPLATE_PROVIDER');
 
         if (!$engineProvider) {
-            throw new Exception('TEMPLATE_PROVIDER was not provided.');
+            throw new \Exception('TEMPLATE_PROVIDER was not provided.');
         }
 
         self::$engine = new $engineProvider();
@@ -29,7 +52,7 @@ class TemplateEngine
     public static function getEngine(): TemplateEngineInterface
     {
         if (self::$engine === null) {
-            throw new Exception("TemplateManager não foi inicializado.");
+            throw new \Exception("TemplateManager não foi inicializado.");
         }
 
         return self::$engine;

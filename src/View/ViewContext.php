@@ -4,6 +4,16 @@ namespace Lalaz\View;
 
 use Lalaz\Core\LazyValue;
 
+/**
+ * Class ViewContext
+ *
+ * Manages global view data and variables that are available across all views.
+ * Supports lazy evaluation of variables through closures for performance optimization.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
+ */
 class ViewContext
 {
     protected static array $data = [];

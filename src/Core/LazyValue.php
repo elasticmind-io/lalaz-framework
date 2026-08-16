@@ -11,6 +11,10 @@ namespace Lalaz\Core;
  *
  * Useful for optimizing performance and avoiding unnecessary computation
  * when a view variable is not actually used.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
  */
 class LazyValue
 {

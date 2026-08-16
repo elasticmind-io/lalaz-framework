@@ -2,8 +2,8 @@
 
 namespace Lalaz\Data;
 
-use Lalaz\Data\Adapters\ConnectionAdapterInterface;
 use PDOStatement;
+use Lalaz\Data\Contracts\ConnectionAdapterInterface;
 
 /**
  * Class Database
@@ -121,6 +121,16 @@ class Database
     public function isConnected(): bool
     {
         return $this->adapter->isConnected();
+    }
+
+    /**
+     * Returns the underlying connection adapter.
+     *
+     * @return ConnectionAdapterInterface The connection adapter instance.
+     */
+    public function getAdapter(): ConnectionAdapterInterface
+    {
+        return $this->adapter;
     }
 
     /**

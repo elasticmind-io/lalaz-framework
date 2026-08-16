@@ -1,0 +1,15 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Lalaz Framework CLI
+ *
+ * Command-line interface for the Lalaz framework.
+ */
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+use Lalaz\Core\Cli;
+
+// Pass command-line arguments to the CLI handler
+Cli::command($argv);

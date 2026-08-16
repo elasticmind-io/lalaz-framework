@@ -5,6 +5,7 @@ namespace Lalaz\Http;
 use stdClass;
 use Lalaz\View\View;
 use Lalaz\View\ViewContext;
+use Lalaz\Http\Concerns\FlashMessage;
 
 /**
  * Class Response

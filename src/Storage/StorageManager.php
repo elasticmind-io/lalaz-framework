@@ -2,10 +2,8 @@
 
 namespace Lalaz\Storage;
 
-use Lalaz\Core\Config;
 use Lalaz\Storage\Contracts\StorageInterface;
 use Lalaz\Storage\Adapters\LocalStorageAdapter;
-use Lalaz\Storage\Adapters\S3StorageAdapter;
 
 /**
  * Class StorageManager
