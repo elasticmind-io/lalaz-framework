@@ -39,7 +39,10 @@ class SessionManager
             ini_set('session.use_only_cookies', '1');
 
             // Configure session lifetime
-            ini_set('session.gc_maxlifetime', config('SESSION_LIFETIME'));
+            // com default: sem SESSION_LIFETIME definido, config() devolve null e
+            // ini_set(null) e deprecado no PHP 8.1+. Antes este bloco nunca rodava,
+            // entao o aviso ficava latente; agora ele roda em toda requisicao.
+            ini_set('session.gc_maxlifetime', (string) ((int) config('SESSION_LIFETIME', 7200)));
 
             session_start();
 
@@ -165,7 +168,11 @@ class SessionManager
      */
     private static function getPartialIp(): string
     {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        // Request::clientIp() e nao REMOTE_ADDR: atras de proxy (o codeinit.dev
+        // fica atras do Cloudflare) o REMOTE_ADDR e o IP da borda, que varia
+        // entre requisicoes. Como divergencia de fingerprint destroi a sessao,
+        // ler o IP errado significava logout aleatorio no meio do trabalho.
+        $ip = Request::clientIp();
 
         // IPv4: Keep first 3 octets (e.g., 192.168.1.x)
         if (strpos($ip, '.') !== false) {

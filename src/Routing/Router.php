@@ -430,6 +430,16 @@ class Router
             $path = ($path !== '/') ? rtrim($path, '/') : $path;
             $path = $this->removeQueryString($path);
 
+            // HEAD e um GET sem corpo. So GET/POST/PUT/PATCH/DELETE sao
+            // registrados, entao um HEAD nao casava rota nenhuma e caia no
+            // not-found — ate numa pagina que existe. Monitor de uptime e
+            // verificador de link usam HEAD, e o PHP ja descarta o corpo.
+            // Normalizado AQUI, antes de escolher o caminho de despacho: feito
+            // dentro de um dos dois, o HEAD funcionaria so com o cache ligado.
+            if (strtoupper($method) === 'HEAD') {
+                $method = 'GET';
+            }
+
             // Use cached dispatch if available
             if ($this->cachedRoutes !== null) {
                 $this->dispatchCached($method, $path);

@@ -38,7 +38,11 @@ class Request extends stdClass
     private $cookies;
 
     /** @var array List of HTTP methods that require CSRF token validation */
-    private static $methodsToValidateCsrfToken = ['POST', 'PUT', 'PATCH'];
+    /**
+     * DELETE tambem muda estado e estava de fora: uma rota de exclusao
+     * passava sem token nenhum.
+     */
+    private static $methodsToValidateCsrfToken = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
     /**
      * Constructor for the Request class.
@@ -235,6 +239,22 @@ class Request extends stdClass
 
     public function ip(): string
     {
+        return static::clientIp();
+    }
+
+    /**
+     * Resolve o IP do cliente atravessando proxy.
+     *
+     * Estatico porque o SessionManager precisa do mesmo resultado e nao tem uma
+     * instancia de Request em maos. Duas implementacoes divergiriam, e foi
+     * exatamente isso que aconteceu: o fingerprint de sessao lia REMOTE_ADDR
+     * cru, que atras do Cloudflare e o IP da BORDA — muda de PoP entre
+     * requisicoes e derrubava a sessao sozinho.
+     *
+     * @return string
+     */
+    public static function clientIp(): string
+    {
         $headers = [
             'HTTP_X_FORWARDED_FOR',
             'HTTP_CF_CONNECTING_IP',
@@ -315,9 +335,12 @@ class Request extends stdClass
      */
     private function initializeSession(): void
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        // SessionManager::start(), nao session_start() cru. O Router constroi um
+        // Request em toda rota que casa, entao este era SEMPRE o primeiro a
+        // abrir a sessao — com os atributos padrao, sem HttpOnly e sem SameSite.
+        // Quando o SessionManager rodava depois, session_status() ja era ACTIVE
+        // e o bloco inteiro de endurecimento era pulado em silencio.
+        SessionManager::start();
 
         $this->session = $_SESSION;
     }
