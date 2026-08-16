@@ -2,6 +2,16 @@
 
 namespace Lalaz\Routing;
 
+/**
+ * Class GroupDefinition
+ *
+ * Represents a group of routes with common properties such as prefix and middleware.
+ * Provides a fluent interface for defining grouped routes in the application.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
+ */
 class GroupDefinition
 {
     /** @var RouteDefinition[] $routes The routes that are part of this group */
@@ -17,15 +27,26 @@ class GroupDefinition
     }
 
     /**
-     * Sets middlewares for all routes within the group.
+     * Sets middleware for all routes within the group.
      *
-     * @param array $middlewares An array of middleware class names.
-     * @return void
+     * @param array $middleware middleware class names.
+     * @return $this
      */
     public function middleware($middleware): GroupDefinition
     {
+        return $this->middlewares([$middleware]);
+    }
+
+    /**
+     * Sets middlewares for all routes within the group.
+     *
+     * @param array $middlewares An array of middleware class names.
+     * @return $this
+     */
+    public function middlewares($middlewares = array()): GroupDefinition
+    {
         foreach ($this->routes as $route) {
-            $route->middlewares([$middleware]);
+            $route->middlewares($middlewares);
         }
 
         return $this;
@@ -36,10 +57,10 @@ class GroupDefinition
      *
      * @return $this
      */
-    public function useAuthentication(): GroupDefinition
+    public function useAuthentication(string $loginUrl = ''): GroupDefinition
     {
         foreach ($this->routes as $route) {
-            $route->useAuthentication();
+            $route->useAuthentication($loginUrl);
         }
 
         return $this;

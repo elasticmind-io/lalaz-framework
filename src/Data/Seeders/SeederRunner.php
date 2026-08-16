@@ -29,7 +29,7 @@ class SeederRunner
      *
      * @var string
      */
-    protected string $baseDir = './src/Db/Seeders/';
+    protected string $baseDir = './src/Database/Seeders/';
 
     /**
      * SeederRunner constructor.

@@ -2,9 +2,9 @@
 
 namespace Lalaz\Queue\Providers;
 
-use Lalaz\Queue\Contracts\QueueProviderInterface;
-use Lalaz\Data\Database;
 use PDO;
+use Lalaz\Data\Database;
+use Lalaz\Queue\Contracts\QueueProviderInterface;
 
 /**
  * Class DatabaseQueueProvider

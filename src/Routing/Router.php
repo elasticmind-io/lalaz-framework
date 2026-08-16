@@ -2,15 +2,32 @@
 
 namespace Lalaz\Routing;
 
+use Lalaz\Core\Config;
 use Lalaz\Http\Request;
 use Lalaz\Http\Response;
 use Lalaz\View\View;
+use Lalaz\Exceptions\FrameworkException;
+use Lalaz\Exceptions\ExceptionHandler;
 
 /**
  * Class Router
  *
- * This class handles the routing of HTTP requests to controllers and methods within the application.
- * It supports various HTTP methods and middleware integration, providing a flexible system for defining routes.
+ * HTTP request routing system that maps URLs to controllers and methods.
+ * Supports various HTTP methods, middleware integration, and route grouping,
+ * providing a flexible system for defining application routes.
+ *
+ * Example usage:
+ * ```php
+ * // Configure routes on initialization
+ * Router::onInitialized(function($router) {
+ *     $router->get('/', [HomeController::class, 'index']);
+ *     $router->post('/users', [UserController::class, 'store']);
+ *
+ *     $router->group('/api', function($router) {
+ *         $router->get('/users', [ApiController::class, 'users']);
+ *     });
+ * });
+ * ```
  *
  * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
@@ -26,6 +43,43 @@ class Router
 
     /** @var string|null $prefix Stores the route prefix for groups */
     protected ?string $prefix = null;
+
+    /** @var string|null $cacheFile Path to the cache file */
+    protected ?string $cacheFile = null;
+
+    /** @var array|null $cachedRoutes Cached routes data */
+    protected ?array $cachedRoutes = null;
+
+    /** @var bool $cacheEnabled Whether route caching is enabled */
+    protected bool $cacheEnabled = false;
+
+    /**
+     * Initialization callback to be executed when Router is constructed.
+     *
+     * @var \Closure|null
+     */
+    private static ?\Closure $initializationCallback = null;
+
+    /**
+     * Router constructor.
+     *
+     * Initializes the router and executes any registered initialization callbacks.
+     */
+    public function __construct()
+    {
+        $this->emitInitializationEvent();
+        $this->cacheEnabled = $this->isCacheEnabled();
+    }
+
+    /**
+     * Check if route caching is enabled via configuration.
+     *
+     * @return bool
+     */
+    private function isCacheEnabled(): bool
+    {
+        return Config::getTyped('ROUTE_CACHE_ENABLED', false, 'bool');
+    }
 
     /**
      * Get all registered routes.
@@ -56,7 +110,7 @@ class Router
      * @param string $path The URI path for the route.
      * @param string $controller The controller and method in 'Controller@method' format.
      * @param array $middlewares An optional array of middleware classes for this route.
-     * @return Router
+     * @return RouteDefinition
      */
     public function route($method, $path, $controller, $middlewares = array()): RouteDefinition
     {
@@ -64,7 +118,7 @@ class Router
         $controllerClassName = $this->controllerLookup($controllerName);
 
         if (!$controllerClassName) {
-            die("Controller ${controllerName} was not found!");
+            throw FrameworkException::controllerNotFound($controllerName);
         }
 
         return $this->map($method, $path, $controllerClassName, $function, $middlewares);
@@ -76,7 +130,7 @@ class Router
      * @param string $path The URI path for the route.
      * @param string $controller The controller and method in 'Controller@method' format.
      * @param array $middlewares An optional array of middleware classes for this route.
-     * @return Router
+     * @return RouteDefinition
      */
     public function get($path, $controller, $middlewares = array()): RouteDefinition
     {
@@ -89,7 +143,7 @@ class Router
      * @param string $path The URI path for the route.
      * @param string $controller The controller and method in 'Controller@method' format.
      * @param array $middlewares An optional array of middleware classes for this route.
-     * @return Router
+     * @return RouteDefinition
      */
     public function post($path, $controller, $middlewares = array()): RouteDefinition
     {
@@ -102,7 +156,7 @@ class Router
      * @param string $path The URI path for the route.
      * @param string $controller The controller and method in 'Controller@method' format.
      * @param array $middlewares An optional array of middleware classes for this route.
-     * @return Router
+     * @return RouteDefinition
      */
     public function put($path, $controller, $middlewares = array()): RouteDefinition
     {
@@ -115,7 +169,7 @@ class Router
      * @param string $path The URI path for the route.
      * @param string $controller The controller and method in 'Controller@method' format.
      * @param array $middlewares An optional array of middleware classes for this route.
-     * @return Router
+     * @return RouteDefinition
      */
     public function patch($path, $controller, $middlewares = array()): RouteDefinition
     {
@@ -128,7 +182,7 @@ class Router
      * @param string $path The URI path for the route.
      * @param string $controller The controller and method in 'Controller@method' format.
      * @param array $middlewares An optional array of middleware classes for this route.
-     * @return Router
+     * @return RouteDefinition
      */
     public function delete($path, $controller, $middlewares = array()): RouteDefinition
     {
@@ -183,6 +237,183 @@ class Router
     }
 
     /**
+     * Set the cache file path for routes.
+     *
+     * @param string $path The absolute path to the cache file.
+     * @return void
+     */
+    public function setCacheFile(string $path): void
+    {
+        $this->cacheFile = $path;
+    }
+
+    /**
+     * Load routes from cache if available.
+     *
+     * @return bool True if cache was loaded successfully, false otherwise.
+     */
+    public function loadFromCache(): bool
+    {
+        if (!$this->cacheEnabled || !$this->cacheFile || !file_exists($this->cacheFile)) {
+            return false;
+        }
+
+        try {
+            $this->cachedRoutes = require $this->cacheFile;
+
+            // Validate cache structure
+            if (!is_array($this->cachedRoutes)
+                || !isset($this->cachedRoutes['static'])
+                || !isset($this->cachedRoutes['dynamic'])) {
+                $this->cachedRoutes = null;
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->cachedRoutes = null;
+            return false;
+        }
+    }
+
+    /**
+     * Save compiled routes to cache.
+     *
+     * @return bool True if cache was saved successfully, false otherwise.
+     */
+    public function saveToCache(): bool
+    {
+        if (!$this->cacheFile) {
+            return false;
+        }
+
+        try {
+            $cache = $this->compileRoutes();
+
+            $dir = dirname($this->cacheFile);
+            if (!is_dir($dir)) {
+                mkdir($dir, 0755, true);
+            }
+
+            $content = "<?php\n\n// This file is auto-generated. Do not modify manually.\n";
+            $content .= "// Generated at: " . date('Y-m-d H:i:s') . "\n\n";
+            $content .= "return " . var_export($cache, true) . ";\n";
+
+            file_put_contents($this->cacheFile, $content);
+
+            // Invalidate OPcache for this file
+            if (function_exists('opcache_invalidate')) {
+                opcache_invalidate($this->cacheFile, true);
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Compile routes into optimized format for caching.
+     *
+     * @return array The compiled routes data structure.
+     */
+    private function compileRoutes(): array
+    {
+        $static = [];
+        $dynamic = [];
+
+        foreach ($this->routes as $route) {
+            $method = $route->getMethod();
+            $path = $route->getPath();
+            $key = "{$method}:{$path}";
+
+            $data = [
+                'controller' => $route->getController(),
+                'function' => $route->getFunction(),
+                'middlewares' => $this->serializeMiddlewares($route->getMiddlewares()),
+                'params' => $route->getParams()
+            ];
+
+            // Check if route is static (no parameters)
+            if (strpos($path, '{') === false) {
+                $static[$key] = $data;
+            } else {
+                // Dynamic route - pre-compile regex
+                $pattern = preg_replace('/\{(\w+)\}/', '([^/]+)', $path);
+                $pattern = '#^' . $pattern . '$#';
+
+                $dynamic[] = array_merge($data, [
+                    'method' => $method,
+                    'pattern' => $pattern
+                ]);
+            }
+        }
+
+        return [
+            'static' => $static,
+            'dynamic' => $dynamic,
+            'hash' => $this->calculateRoutesHash(),
+            'count' => count($this->routes)
+        ];
+    }
+
+    /**
+     * Serialize middlewares for caching (handle both string and object types).
+     *
+     * @param array $middlewares
+     * @return array
+     */
+    private function serializeMiddlewares(array $middlewares): array
+    {
+        return array_map(function($middleware) {
+            if (is_object($middleware)) {
+                return [
+                    'type' => 'object',
+                    'class' => get_class($middleware),
+                    // Note: Object state is not serialized, may need reconstruction
+                ];
+            }
+            return [
+                'type' => 'string',
+                'class' => $middleware
+            ];
+        }, $middlewares);
+    }
+
+    /**
+     * Calculate hash of all routes for cache validation.
+     *
+     * @return string MD5 hash of route definitions.
+     */
+    private function calculateRoutesHash(): string
+    {
+        $data = array_map(function($route) {
+            return sprintf(
+                '%s:%s:%s:%s',
+                $route->getMethod(),
+                $route->getPath(),
+                $route->getController(),
+                $route->getFunction()
+            );
+        }, $this->routes);
+
+        return md5(implode('|', $data));
+    }
+
+    /**
+     * Clear the route cache file.
+     *
+     * @return bool True if cache was cleared successfully, false otherwise.
+     */
+    public function clearCache(): bool
+    {
+        if ($this->cacheFile && file_exists($this->cacheFile)) {
+            return unlink($this->cacheFile);
+        }
+        return false;
+    }
+
+    /**
      * Dispatches the current HTTP request to the appropriate route.
      *
      * @param string $method The HTTP method of the request.
@@ -191,13 +422,137 @@ class Router
      */
     public function dispatch($method, $path): void
     {
-        if (strpos($path, "/public/") !== false) {
+        try {
+            if (strpos($path, "/public/") !== false) {
+                return;
+            }
+
+            $path = ($path !== '/') ? rtrim($path, '/') : $path;
+            $path = $this->removeQueryString($path);
+
+            // HEAD e um GET sem corpo. So GET/POST/PUT/PATCH/DELETE sao
+            // registrados, entao um HEAD nao casava rota nenhuma e caia no
+            // not-found — ate numa pagina que existe. Monitor de uptime e
+            // verificador de link usam HEAD, e o PHP ja descarta o corpo.
+            // Normalizado AQUI, antes de escolher o caminho de despacho: feito
+            // dentro de um dos dois, o HEAD funcionaria so com o cache ligado.
+            if (strtoupper($method) === 'HEAD') {
+                $method = 'GET';
+            }
+
+            // Use cached dispatch if available
+            if ($this->cachedRoutes !== null) {
+                $this->dispatchCached($method, $path);
+                return;
+            }
+
+            // Fallback to normal dispatch
+            $this->dispatchNormal($method, $path);
+
+        } catch (\Throwable $e) {
+            ExceptionHandler::handle($e);
+        }
+    }
+
+    /**
+     * Dispatch using cached routes (optimized).
+     *
+     * @param string $method HTTP method
+     * @param string $path URI path
+     * @return void
+     */
+    private function dispatchCached(string $method, string $path): void
+    {
+        $key = "{$method}:{$path}";
+
+        // 1. Try static route match (O(1) hash lookup)
+        if (isset($this->cachedRoutes['static'][$key])) {
+            $route = $this->cachedRoutes['static'][$key];
+            $this->executeRoute($route, []);
             return;
         }
 
-        $path = rtrim($path, '/');
-        $path = $this->removeQueryString($path);
+        // 2. Try dynamic route match (only loop through dynamic routes)
+        foreach ($this->cachedRoutes['dynamic'] as $route) {
+            if ($route['method'] !== $method) {
+                continue;
+            }
 
+            if (preg_match($route['pattern'], $path, $matches)) {
+                array_shift($matches);
+
+                $pathParams = [];
+                foreach ($route['params'] as $index => $paramName) {
+                    $pathParams[$paramName] = $matches[$index] ?? '';
+                }
+
+                $this->executeRoute($route, $pathParams);
+                return;
+            }
+        }
+
+        View::renderNotFound();
+    }
+
+    /**
+     * Execute a matched route.
+     *
+     * @param array $route Route data
+     * @param array $pathParams Path parameters
+     * @return void
+     */
+    private function executeRoute(array $route, array $pathParams): void
+    {
+        $req = new Request($pathParams);
+        $res = new Response();
+
+        // Deserialize and execute middlewares
+        $middlewares = $this->deserializeMiddlewares($route['middlewares']);
+        $allMiddlewares = array_merge($this->globalMiddlewares, $middlewares);
+
+        foreach ($allMiddlewares as $middleware) {
+            if (is_object($middleware)) {
+                $middleware->handle($req, $res);
+            } else {
+                $handler = new $middleware();
+                $handler->handle($req, $res);
+            }
+        }
+
+        // Execute controller action
+        $controller = $route['controller'];
+        $function = $route['function'];
+
+        $controllerInstance = new $controller;
+        $controllerInstance->callAction($function, [$req, $res]);
+    }
+
+    /**
+     * Deserialize middlewares from cache.
+     *
+     * @param array $serializedMiddlewares
+     * @return array
+     */
+    private function deserializeMiddlewares(array $serializedMiddlewares): array
+    {
+        return array_map(function($middleware) {
+            if ($middleware['type'] === 'object') {
+                // Reconstruct object (may need additional logic for stateful middlewares)
+                return new $middleware['class']();
+            }
+            return $middleware['class'];
+        }, $serializedMiddlewares);
+    }
+
+    /**
+     * Normal dispatch without cache (original implementation).
+     *
+     * @param string $method HTTP method
+     * @param string $path URI path
+     * @return void
+     */
+    private function dispatchNormal(string $method, string $path): void
+    {
         $matchRouteAndMethod = function($route, $path, &$params, $method) {
             return $this->matchPath($route->getPath(), $path, $params)
                 && $route->getMethod() === strtoupper($method);
@@ -271,7 +626,7 @@ class Router
     private function controllerLookup($controllerName): string | false
     {
         foreach (['App\\Controllers'] as $namespace) {
-            $className = "${namespace}\\${controllerName}";
+            $className = "{$namespace}\\{$controllerName}";
 
             if (class_exists($className)) {
                 return $className;
@@ -289,7 +644,7 @@ class Router
      * @param string $controller The controller class name.
      * @param string $function The method name in the controller to call.
      * @param array $middlewares An optional array of middleware classes.
-     * @return Router
+     * @return RouteDefinition
      */
     private function map($method, $path, $controller, $function, $middlewares = []): RouteDefinition
     {
@@ -333,5 +688,52 @@ class Router
         }
 
         return false;
+    }
+
+    /**
+     * Execute the initialization callback if one is registered.
+     *
+     * This method is called automatically during construction and invokes
+     * the static initialization callback if it has been set via onInitialized().
+     *
+     * @return void
+     * @see Router::onInitialized()
+     */
+    private function emitInitializationEvent(): void
+    {
+        if (self::$initializationCallback !== null) {
+            (self::$initializationCallback)($this);
+        }
+    }
+
+    /**
+     * Set a callback to execute when Router is instantiated.
+     *
+     * This provides a hook for configuring routes before the Router is used.
+     * The callback receives the Router instance as its only parameter, allowing
+     * registration of routes during initialization.
+     *
+     * This method should be called early in your application bootstrap, before
+     * the Router is instantiated (typically in bootstrap.php or Lalaz::initialize()).
+     *
+     * @param \Closure $callback A closure that receives the Router instance: function(Router $router): void
+     * @return void
+     *
+     * @example
+     * ```php
+     * // In bootstrap.php or before Lalaz::initialize()
+     * Router::onInitialized(function(Router $router) {
+     *     $router->get('/', [HomeController::class, 'index']);
+     *     $router->post('/users', [UserController::class, 'store']);
+     *
+     *     $router->group('/api', function($router) {
+     *         $router->get('/users', [ApiController::class, 'list']);
+     *     });
+     * });
+     * ```
+     */
+    public static function onInitialized(\Closure $callback): void
+    {
+        self::$initializationCallback = $callback;
     }
 }

@@ -2,12 +2,17 @@
 
 namespace Lalaz\Data\Schema;
 
+use Lalaz\Data\Contracts\SchemaGrammarInterface;
+
 /**
  * Class Blueprint
  *
  * This class provides a blueprint for defining database table schemas.
  * It allows you to specify columns, their data types, indexes, foreign keys,
  * and other constraints for creating or modifying tables in a database schema migration.
+ *
+ * The Blueprint now stores column definitions abstractly and uses a Grammar
+ * to compile them into database-specific SQL.
  *
  * @package elasticmind\lalaz-framework
  * @author  Elasticmind <ola@elasticmind.io>
@@ -18,26 +23,42 @@ class Blueprint
     /** @var string $table The name of the table being defined */
     protected string $table;
 
-    /** @var array $columns An array of column definitions */
-    protected array $columns = [];
+    /** @var array $columnDefinitions Abstract column definitions (type, params) */
+    protected array $columnDefinitions = [];
 
-    /** @var array $indexes An array of index definitions */
-    protected array $indexes = [];
+    /** @var array $indexDefinitions Abstract index definitions */
+    protected array $indexDefinitions = [];
 
-    /** @var array $foreignKeys An array of foreign key definitions */
-    protected array $foreignKeys = [];
+    /** @var array $foreignKeyDefinitions Abstract foreign key definitions */
+    protected array $foreignKeyDefinitions = [];
 
     /** @var array $tableOptions An array of table-level options */
     protected array $tableOptions = [];
+
+    /** @var SchemaGrammarInterface|null $grammar The grammar used to compile SQL */
+    protected ?SchemaGrammarInterface $grammar = null;
 
     /**
      * Constructor for the Blueprint class.
      *
      * @param string $table The name of the table to define.
+     * @param SchemaGrammarInterface|null $grammar Optional grammar for compilation.
      */
-    public function __construct(string $table)
+    public function __construct(string $table, ?SchemaGrammarInterface $grammar = null)
     {
         $this->table = $table;
+        $this->grammar = $grammar;
+    }
+
+    /**
+     * Set the grammar used for compiling SQL.
+     *
+     * @param SchemaGrammarInterface $grammar
+     * @return void
+     */
+    public function setGrammar(SchemaGrammarInterface $grammar): void
+    {
+        $this->grammar = $grammar;
     }
 
     // Column Definitions
@@ -50,7 +71,10 @@ class Blueprint
      */
     public function increments(string $column): self
     {
-        $this->columns[] = "$column INT AUTO_INCREMENT PRIMARY KEY";
+        $this->columnDefinitions[] = [
+            'type' => 'increments',
+            'column' => $column,
+        ];
         return $this;
     }
 
@@ -65,8 +89,13 @@ class Blueprint
      */
     public function bigInteger(string $column, bool $unsigned = false, bool $nullable = false, $default = null): self
     {
-        $definition = "$column BIGINT" . ($unsigned ? " UNSIGNED" : "") . $this->buildColumnOptions($nullable, $default);
-        $this->columns[] = $definition;
+        $this->columnDefinitions[] = [
+            'type' => 'bigInteger',
+            'column' => $column,
+            'unsigned' => $unsigned,
+            'nullable' => $nullable,
+            'default' => $default,
+        ];
         return $this;
     }
 
@@ -81,8 +110,13 @@ class Blueprint
      */
     public function integer(string $column, bool $unsigned = false, bool $nullable = false, $default = null): self
     {
-        $definition = "$column INT" . ($unsigned ? " UNSIGNED" : "") . $this->buildColumnOptions($nullable, $default);
-        $this->columns[] = $definition;
+        $this->columnDefinitions[] = [
+            'type' => 'integer',
+            'column' => $column,
+            'unsigned' => $unsigned,
+            'nullable' => $nullable,
+            'default' => $default,
+        ];
         return $this;
     }
 
@@ -97,8 +131,13 @@ class Blueprint
      */
     public function smallInteger(string $column, bool $unsigned = false, bool $nullable = false, $default = null): self
     {
-        $definition = "$column SMALLINT" . ($unsigned ? " UNSIGNED" : "") . $this->buildColumnOptions($nullable, $default);
-        $this->columns[] = $definition;
+        $this->columnDefinitions[] = [
+            'type' => 'smallInteger',
+            'column' => $column,
+            'unsigned' => $unsigned,
+            'nullable' => $nullable,
+            'default' => $default,
+        ];
         return $this;
     }
 
@@ -113,8 +152,13 @@ class Blueprint
      */
     public function tinyInteger(string $column, bool $unsigned = false, bool $nullable = false, $default = null): self
     {
-        $definition = "$column TINYINT" . ($unsigned ? " UNSIGNED" : "") . $this->buildColumnOptions($nullable, $default);
-        $this->columns[] = $definition;
+        $this->columnDefinitions[] = [
+            'type' => 'tinyInteger',
+            'column' => $column,
+            'unsigned' => $unsigned,
+            'nullable' => $nullable,
+            'default' => $default,
+        ];
         return $this;
     }
 
@@ -131,8 +175,15 @@ class Blueprint
      */
     public function string(string $column, int $length = 255, bool $nullable = false, $default = null, ?string $charset = null, ?string $collation = null): self
     {
-        $definition = "$column VARCHAR($length)" . $this->buildColumnOptions($nullable, $default, $charset, $collation);
-        $this->columns[] = $definition;
+        $this->columnDefinitions[] = [
+            'type' => 'string',
+            'column' => $column,
+            'length' => $length,
+            'nullable' => $nullable,
+            'default' => $default,
+            'charset' => $charset,
+            'collation' => $collation,
+        ];
         return $this;
     }
 
@@ -147,8 +198,13 @@ class Blueprint
      */
     public function text(string $column, bool $nullable = false, ?string $charset = null, ?string $collation = null): self
     {
-        $definition = "$column TEXT" . $this->buildColumnOptions($nullable, null, $charset, $collation);
-        $this->columns[] = $definition;
+        $this->columnDefinitions[] = [
+            'type' => 'text',
+            'column' => $column,
+            'nullable' => $nullable,
+            'charset' => $charset,
+            'collation' => $collation,
+        ];
         return $this;
     }
 
@@ -162,8 +218,12 @@ class Blueprint
      */
     public function datetime(string $column, bool $nullable = false, $default = null): self
     {
-        $definition = "$column DATETIME" . $this->buildColumnOptions($nullable, $default);
-        $this->columns[] = $definition;
+        $this->columnDefinitions[] = [
+            'type' => 'datetime',
+            'column' => $column,
+            'nullable' => $nullable,
+            'default' => $default,
+        ];
         return $this;
     }
 
@@ -177,8 +237,12 @@ class Blueprint
      */
     public function date(string $column, bool $nullable = false, $default = null): self
     {
-        $definition = "$column DATE" . $this->buildColumnOptions($nullable, $default);
-        $this->columns[] = $definition;
+        $this->columnDefinitions[] = [
+            'type' => 'date',
+            'column' => $column,
+            'nullable' => $nullable,
+            'default' => $default,
+        ];
         return $this;
     }
 
@@ -192,8 +256,12 @@ class Blueprint
      */
     public function time(string $column, bool $nullable = false, $default = null): self
     {
-        $definition = "$column TIME" . $this->buildColumnOptions($nullable, $default);
-        $this->columns[] = $definition;
+        $this->columnDefinitions[] = [
+            'type' => 'time',
+            'column' => $column,
+            'nullable' => $nullable,
+            'default' => $default,
+        ];
         return $this;
     }
 
@@ -208,11 +276,13 @@ class Blueprint
      */
     public function timestamp(string $column, bool $nullable = false, $default = null, bool $onUpdateCurrentTimestamp = false): self
     {
-        $definition = "$column TIMESTAMP" . $this->buildColumnOptions($nullable, $default);
-        if ($onUpdateCurrentTimestamp) {
-            $definition .= " ON UPDATE CURRENT_TIMESTAMP";
-        }
-        $this->columns[] = $definition;
+        $this->columnDefinitions[] = [
+            'type' => 'timestamp',
+            'column' => $column,
+            'nullable' => $nullable,
+            'default' => $default,
+            'onUpdateCurrentTimestamp' => $onUpdateCurrentTimestamp,
+        ];
         return $this;
     }
 
@@ -226,9 +296,12 @@ class Blueprint
      */
     public function boolean(string $column, bool $nullable = false, bool $default = false): self
     {
-        $defaultValue = $default ? '1' : '0';
-        $definition = "$column TINYINT(1)" . $this->buildColumnOptions($nullable, $defaultValue);
-        $this->columns[] = $definition;
+        $this->columnDefinitions[] = [
+            'type' => 'boolean',
+            'column' => $column,
+            'nullable' => $nullable,
+            'default' => $default,
+        ];
         return $this;
     }
 
@@ -242,8 +315,12 @@ class Blueprint
      */
     public function float(string $column, bool $nullable = false, $default = null): self
     {
-        $definition = "$column FLOAT" . $this->buildColumnOptions($nullable, $default);
-        $this->columns[] = $definition;
+        $this->columnDefinitions[] = [
+            'type' => 'float',
+            'column' => $column,
+            'nullable' => $nullable,
+            'default' => $default,
+        ];
         return $this;
     }
 
@@ -257,8 +334,12 @@ class Blueprint
      */
     public function double(string $column, bool $nullable = false, $default = null): self
     {
-        $definition = "$column DOUBLE" . $this->buildColumnOptions($nullable, $default);
-        $this->columns[] = $definition;
+        $this->columnDefinitions[] = [
+            'type' => 'double',
+            'column' => $column,
+            'nullable' => $nullable,
+            'default' => $default,
+        ];
         return $this;
     }
 
@@ -274,8 +355,14 @@ class Blueprint
      */
     public function decimal(string $column, int $precision = 8, int $scale = 2, bool $nullable = false, $default = null): self
     {
-        $definition = "$column DECIMAL($precision, $scale)" . $this->buildColumnOptions($nullable, $default);
-        $this->columns[] = $definition;
+        $this->columnDefinitions[] = [
+            'type' => 'decimal',
+            'column' => $column,
+            'precision' => $precision,
+            'scale' => $scale,
+            'nullable' => $nullable,
+            'default' => $default,
+        ];
         return $this;
     }
 
@@ -289,8 +376,12 @@ class Blueprint
      */
     public function binary(string $column, int $length = 255, bool $nullable = false): self
     {
-        $definition = "$column BINARY($length)" . $this->buildColumnOptions($nullable);
-        $this->columns[] = $definition;
+        $this->columnDefinitions[] = [
+            'type' => 'binary',
+            'column' => $column,
+            'length' => $length,
+            'nullable' => $nullable,
+        ];
         return $this;
     }
 
@@ -305,9 +396,13 @@ class Blueprint
      */
     public function enum(string $column, array $allowed, bool $nullable = false, $default = null): self
     {
-        $allowedValues = implode("', '", $allowed);
-        $definition = "$column ENUM('$allowedValues')" . $this->buildColumnOptions($nullable, $default);
-        $this->columns[] = $definition;
+        $this->columnDefinitions[] = [
+            'type' => 'enum',
+            'column' => $column,
+            'allowed' => $allowed,
+            'nullable' => $nullable,
+            'default' => $default,
+        ];
         return $this;
     }
 
@@ -320,8 +415,11 @@ class Blueprint
      */
     public function json(string $column, bool $nullable = false): self
     {
-        $definition = "$column JSON" . $this->buildColumnOptions($nullable);
-        $this->columns[] = $definition;
+        $this->columnDefinitions[] = [
+            'type' => 'json',
+            'column' => $column,
+            'nullable' => $nullable,
+        ];
         return $this;
     }
 
@@ -335,8 +433,7 @@ class Blueprint
      */
     public function timestamps(): self
     {
-        $this->columns[] = "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP";
-        $this->columns[] = "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP";
+        $this->columnDefinitions[] = ['type' => 'timestamps'];
         return $this;
     }
 
@@ -362,8 +459,10 @@ class Blueprint
     public function primary($columns): self
     {
         $columns = (array)$columns;
-        $columnsList = implode(', ', $columns);
-        $this->indexes[] = "PRIMARY KEY ($columnsList)";
+        $this->indexDefinitions[] = [
+            'type' => 'primary',
+            'columns' => $columns,
+        ];
         return $this;
     }
 
@@ -378,8 +477,11 @@ class Blueprint
     {
         $columns = (array)$columns;
         $name = $name ?? $this->generateIndexName('unique', $columns);
-        $columnsList = implode(', ', $columns);
-        $this->indexes[] = "UNIQUE KEY `$name` ($columnsList)";
+        $this->indexDefinitions[] = [
+            'type' => 'unique',
+            'name' => $name,
+            'columns' => $columns,
+        ];
         return $this;
     }
 
@@ -394,8 +496,11 @@ class Blueprint
     {
         $columns = (array)$columns;
         $name = $name ?? $this->generateIndexName('index', $columns);
-        $columnsList = implode(', ', $columns);
-        $this->indexes[] = "INDEX `$name` ($columnsList)";
+        $this->indexDefinitions[] = [
+            'type' => 'index',
+            'name' => $name,
+            'columns' => $columns,
+        ];
         return $this;
     }
 
@@ -413,8 +518,15 @@ class Blueprint
     public function foreign(string $column, string $referencedTable, string $referencedColumn = 'id', string $onDelete = 'CASCADE', string $onUpdate = 'CASCADE', ?string $constraintName = null): self
     {
         $constraintName = $constraintName ?? $this->generateForeignKeyName($column);
-        $definition = "CONSTRAINT `$constraintName` FOREIGN KEY ($column) REFERENCES $referencedTable($referencedColumn) ON DELETE $onDelete ON UPDATE $onUpdate";
-        $this->foreignKeys[] = $definition;
+        $this->foreignKeyDefinitions[] = [
+            'type' => 'foreign',
+            'name' => $constraintName,
+            'column' => $column,
+            'referencedTable' => $referencedTable,
+            'referencedColumn' => $referencedColumn,
+            'onDelete' => $onDelete,
+            'onUpdate' => $onUpdate,
+        ];
         return $this;
     }
 
@@ -428,7 +540,11 @@ class Blueprint
     public function check(string $expression, ?string $name = null): self
     {
         $name = $name ?? $this->generateConstraintName('check', [$expression]);
-        $this->indexes[] = "CONSTRAINT `$name` CHECK ($expression)";
+        $this->indexDefinitions[] = [
+            'type' => 'check',
+            'name' => $name,
+            'expression' => $expression,
+        ];
         return $this;
     }
 
@@ -485,35 +601,6 @@ class Blueprint
     // Helper Methods
 
     /**
-     * Builds the column options for nullable, default values, charset, and collation.
-     *
-     * @param bool        $nullable  Whether the column allows NULL values.
-     * @param mixed       $default   The default value for the column.
-     * @param string|null $charset   The character set for the column.
-     * @param string|null $collation The collation for the column.
-     * @return string The column options as a string.
-     */
-    private function buildColumnOptions(bool $nullable, $default = null, ?string $charset = null, ?string $collation = null): string
-    {
-        $options = $nullable ? ' NULL' : ' NOT NULL';
-        if ($default !== null) {
-            if (is_string($default) && strtoupper($default) !== 'CURRENT_TIMESTAMP') {
-                $defaultValue = "'$default'";
-            } else {
-                $defaultValue = $default;
-            }
-            $options .= " DEFAULT $defaultValue";
-        }
-        if ($charset) {
-            $options .= " CHARACTER SET $charset";
-        }
-        if ($collation) {
-            $options .= " COLLATE $collation";
-        }
-        return $options;
-    }
-
-    /**
      * Generates an index name based on the type and columns.
      *
      * @param string $type    The type of index (unique, index).
@@ -553,51 +640,285 @@ class Blueprint
         return "{$table}_{$expressionsPart}_{$type}";
     }
 
+    // Getter Methods for Grammar
+
     /**
-     * Retrieves the full table definition including columns, indexes, and foreign keys.
+     * Get all column definitions (abstract format).
      *
-     * @return string The table definition for use in SQL statements.
+     * @return array
      */
-    public function getTableDefinition(): string
+    public function getColumnDefinitions(): array
     {
-        $definitions = array_merge($this->columns, $this->indexes, $this->foreignKeys);
-        return implode(",\n", $definitions);
+        return $this->columnDefinitions;
     }
 
     /**
-     * Builds and returns the full CREATE TABLE SQL statement.
+     * Get compiled columns using the grammar.
+     *
+     * @return array
+     */
+    public function getCompiledColumns(): array
+    {
+        if (!$this->grammar) {
+            throw new \RuntimeException('Grammar not set for Blueprint');
+        }
+
+        $compiled = [];
+
+        foreach ($this->columnDefinitions as $definition) {
+            $type = $definition['type'];
+
+            switch ($type) {
+                case 'increments':
+                    $compiled[] = $this->grammar->compileIncrementsColumn($definition['column']);
+                    break;
+
+                case 'bigInteger':
+                    $compiled[] = $this->grammar->compileBigIntegerColumn(
+                        $definition['column'],
+                        $definition['unsigned'],
+                        $definition['nullable'],
+                        $definition['default']
+                    );
+                    break;
+
+                case 'integer':
+                    $compiled[] = $this->grammar->compileIntegerColumn(
+                        $definition['column'],
+                        $definition['unsigned'],
+                        $definition['nullable'],
+                        $definition['default']
+                    );
+                    break;
+
+                case 'smallInteger':
+                    $compiled[] = $this->grammar->compileSmallIntegerColumn(
+                        $definition['column'],
+                        $definition['unsigned'],
+                        $definition['nullable'],
+                        $definition['default']
+                    );
+                    break;
+
+                case 'tinyInteger':
+                    $compiled[] = $this->grammar->compileTinyIntegerColumn(
+                        $definition['column'],
+                        $definition['unsigned'],
+                        $definition['nullable'],
+                        $definition['default']
+                    );
+                    break;
+
+                case 'string':
+                    $compiled[] = $this->grammar->compileStringColumn(
+                        $definition['column'],
+                        $definition['length'],
+                        $definition['nullable'],
+                        $definition['default'],
+                        $definition['charset'] ?? null,
+                        $definition['collation'] ?? null
+                    );
+                    break;
+
+                case 'text':
+                    $compiled[] = $this->grammar->compileTextColumn(
+                        $definition['column'],
+                        $definition['nullable'],
+                        $definition['charset'] ?? null,
+                        $definition['collation'] ?? null
+                    );
+                    break;
+
+                case 'datetime':
+                    $compiled[] = $this->grammar->compileDatetimeColumn(
+                        $definition['column'],
+                        $definition['nullable'],
+                        $definition['default']
+                    );
+                    break;
+
+                case 'date':
+                    $compiled[] = $this->grammar->compileDateColumn(
+                        $definition['column'],
+                        $definition['nullable'],
+                        $definition['default']
+                    );
+                    break;
+
+                case 'time':
+                    $compiled[] = $this->grammar->compileTimeColumn(
+                        $definition['column'],
+                        $definition['nullable'],
+                        $definition['default']
+                    );
+                    break;
+
+                case 'timestamp':
+                    $compiled[] = $this->grammar->compileTimestampColumn(
+                        $definition['column'],
+                        $definition['nullable'],
+                        $definition['default'],
+                        $definition['onUpdateCurrentTimestamp'] ?? false
+                    );
+                    break;
+
+                case 'boolean':
+                    $compiled[] = $this->grammar->compileBooleanColumn(
+                        $definition['column'],
+                        $definition['nullable'],
+                        $definition['default']
+                    );
+                    break;
+
+                case 'float':
+                    $compiled[] = $this->grammar->compileFloatColumn(
+                        $definition['column'],
+                        $definition['nullable'],
+                        $definition['default']
+                    );
+                    break;
+
+                case 'double':
+                    $compiled[] = $this->grammar->compileDoubleColumn(
+                        $definition['column'],
+                        $definition['nullable'],
+                        $definition['default']
+                    );
+                    break;
+
+                case 'decimal':
+                    $compiled[] = $this->grammar->compileDecimalColumn(
+                        $definition['column'],
+                        $definition['precision'],
+                        $definition['scale'],
+                        $definition['nullable'],
+                        $definition['default']
+                    );
+                    break;
+
+                case 'binary':
+                    $compiled[] = $this->grammar->compileBinaryColumn(
+                        $definition['column'],
+                        $definition['length'],
+                        $definition['nullable']
+                    );
+                    break;
+
+                case 'enum':
+                    $compiled[] = $this->grammar->compileEnumColumn(
+                        $definition['column'],
+                        $definition['allowed'],
+                        $definition['nullable'],
+                        $definition['default']
+                    );
+                    break;
+
+                case 'json':
+                    $compiled[] = $this->grammar->compileJsonColumn(
+                        $definition['column'],
+                        $definition['nullable']
+                    );
+                    break;
+
+                case 'timestamps':
+                    $compiled = array_merge($compiled, $this->grammar->compileTimestamps());
+                    break;
+            }
+        }
+
+        return $compiled;
+    }
+
+    /**
+     * Get compiled indexes using the grammar.
+     *
+     * @return array
+     */
+    public function getCompiledIndexes(): array
+    {
+        if (!$this->grammar) {
+            throw new \RuntimeException('Grammar not set for Blueprint');
+        }
+
+        $compiled = [];
+
+        foreach ($this->indexDefinitions as $definition) {
+            $type = $definition['type'];
+
+            switch ($type) {
+                case 'primary':
+                    $compiled[] = $this->grammar->compilePrimaryKey($definition['columns']);
+                    break;
+
+                case 'unique':
+                    $compiled[] = $this->grammar->compileUnique($definition['name'], $definition['columns']);
+                    break;
+
+                case 'index':
+                    $indexSql = $this->grammar->compileIndex($definition['name'], $definition['columns']);
+                    if (!empty($indexSql)) {
+                        $compiled[] = $indexSql;
+                    }
+                    break;
+
+                case 'check':
+                    $compiled[] = "CONSTRAINT `{$definition['name']}` CHECK ({$definition['expression']})";
+                    break;
+            }
+        }
+
+        return $compiled;
+    }
+
+    /**
+     * Get compiled foreign keys using the grammar.
+     *
+     * @return array
+     */
+    public function getCompiledForeignKeys(): array
+    {
+        if (!$this->grammar) {
+            throw new \RuntimeException('Grammar not set for Blueprint');
+        }
+
+        $compiled = [];
+
+        foreach ($this->foreignKeyDefinitions as $definition) {
+            $compiled[] = $this->grammar->compileForeignKey(
+                $definition['name'],
+                $definition['column'],
+                $definition['referencedTable'],
+                $definition['referencedColumn'],
+                $definition['onDelete'],
+                $definition['onUpdate']
+            );
+        }
+
+        return $compiled;
+    }
+
+    /**
+     * Get table options.
+     *
+     * @return array
+     */
+    public function getTableOptions(): array
+    {
+        return $this->tableOptions;
+    }
+
+    /**
+     * Builds and returns the full CREATE TABLE SQL statement using the grammar.
      *
      * @return string The full CREATE TABLE SQL statement.
      */
     public function toSql(): string
     {
-        $tableName = $this->getTableName();
-        $definitions = $this->getTableDefinition();
-        $options = $this->getTableOptions();
-        return "CREATE TABLE $tableName (\n$definitions\n) $options;";
-    }
+        if (!$this->grammar) {
+            throw new \RuntimeException('Grammar not set for Blueprint. Call setGrammar() first.');
+        }
 
-    /**
-     * Retrieves the table options as a string.
-     *
-     * @return string The table options.
-     */
-    private function getTableOptions(): string
-    {
-        $options = [];
-        if (isset($this->tableOptions['engine'])) {
-            $options[] = "ENGINE={$this->tableOptions['engine']}";
-        }
-        if (isset($this->tableOptions['charset'])) {
-            $options[] = "DEFAULT CHARSET={$this->tableOptions['charset']}";
-        }
-        if (isset($this->tableOptions['collation'])) {
-            $options[] = "COLLATE={$this->tableOptions['collation']}";
-        }
-        if (isset($this->tableOptions['comment'])) {
-            $options[] = "COMMENT='{$this->tableOptions['comment']}'";
-        }
-        return implode(' ', $options);
+        return $this->grammar->compileCreate($this);
     }
 
     /**

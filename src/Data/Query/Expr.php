@@ -22,6 +22,44 @@ class Expr
     private array $parameters = [];
 
     /**
+     * Registra um valor e devolve o nome do marcador que o representa.
+     *
+     * O nome tem que ser UNICO. Antes o parametro era indexado pelo nome da
+     * coluna, entao duas condicoes sobre a mesma coluna geravam dois marcadores
+     * iguais e um valor so — a segunda sobrescrevia a primeira em silencio, e um
+     * intervalo virava "created_at > X AND created_at < X", que nunca casa nada.
+     *
+     * O nome tambem e limpo de tudo que nao for palavra: uma coluna qualificada
+     * como "posts.slug" produzia ":posts.slug", que o PDO nao aceita.
+     *
+     * A primeira ocorrencia mantem o nome simples, entao a consulta gerada para
+     * o caso comum continua identica a de antes.
+     *
+     * @param string $key   The column name.
+     * @param mixed  $value The value to bind.
+     * @return string The placeholder name, without the leading colon.
+     */
+    private function bind(string $key, mixed $value): string
+    {
+        $base = preg_replace('/[^A-Za-z0-9_]/', '_', $key);
+
+        if ($base === '' || is_numeric($base[0])) {
+            $base = 'p_' . $base;
+        }
+
+        $name = $base;
+        $suffix = 1;
+
+        while (array_key_exists($name, $this->parameters)) {
+            $name = $base . '_' . (++$suffix);
+        }
+
+        $this->parameters[$name] = $value;
+
+        return $name;
+    }
+
+    /**
      * Adds an 'AND' operator to the condition expressions.
      *
      * @return self Returns the instance for method chaining.
@@ -72,8 +110,7 @@ class Expr
      */
     public function eq(string $key, mixed $value): self
     {
-        $this->conditions[] = "$key = :$key";
-        $this->parameters[$key] = $value;
+        $this->conditions[] = "$key = :" . $this->bind($key, $value);
         return $this;
     }
 
@@ -86,8 +123,7 @@ class Expr
      */
     public function neq(string $key, mixed $value): self
     {
-        $this->conditions[] = "$key <> :$key";
-        $this->parameters[$key] = $value;
+        $this->conditions[] = "$key <> :" . $this->bind($key, $value);
         return $this;
     }
 
@@ -100,8 +136,7 @@ class Expr
      */
     public function gt(string $key, mixed $value): self
     {
-        $this->conditions[] = "$key > :$key";
-        $this->parameters[$key] = $value;
+        $this->conditions[] = "$key > :" . $this->bind($key, $value);
         return $this;
     }
 
@@ -114,8 +149,7 @@ class Expr
      */
     public function gte(string $key, mixed $value): self
     {
-        $this->conditions[] = "$key >= :$key";
-        $this->parameters[$key] = $value;
+        $this->conditions[] = "$key >= :" . $this->bind($key, $value);
         return $this;
     }
 
@@ -128,8 +162,7 @@ class Expr
      */
     public function lt(string $key, mixed $value): self
     {
-        $this->conditions[] = "$key < :$key";
-        $this->parameters[$key] = $value;
+        $this->conditions[] = "$key < :" . $this->bind($key, $value);
         return $this;
     }
 
@@ -142,8 +175,7 @@ class Expr
      */
     public function lte(string $key, mixed $value): self
     {
-        $this->conditions[] = "$key <= :$key";
-        $this->parameters[$key] = $value;
+        $this->conditions[] = "$key <= :" . $this->bind($key, $value);
         return $this;
     }
 
@@ -181,10 +213,8 @@ class Expr
     public function in(string $key, array $values): self
     {
         $placeholders = [];
-        foreach ($values as $index => $value) {
-            $paramKey = "{$key}_{$index}";
-            $placeholders[] = ":$paramKey";
-            $this->parameters[$paramKey] = $value;
+        foreach ($values as $value) {
+            $placeholders[] = ':' . $this->bind($key, $value);
         }
         $inQuery = implode(', ', $placeholders);
         $this->conditions[] = "$key IN ($inQuery)";
@@ -201,10 +231,8 @@ class Expr
     public function notIn(string $key, array $values): self
     {
         $placeholders = [];
-        foreach ($values as $index => $value) {
-            $paramKey = "{$key}_{$index}";
-            $placeholders[] = ":$paramKey";
-            $this->parameters[$paramKey] = $value;
+        foreach ($values as $value) {
+            $placeholders[] = ':' . $this->bind($key, $value);
         }
         $notInQuery = implode(', ', $placeholders);
         $this->conditions[] = "$key NOT IN ($notInQuery)";

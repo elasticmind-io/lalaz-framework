@@ -4,6 +4,16 @@ namespace Lalaz\Data\Concerns;
 
 use Lalaz\Lalaz;
 
+/**
+ * Trait HasValidation
+ *
+ * Provides comprehensive validation functionality for ActiveRecord models,
+ * including validation rules for common data types, formats, and constraints.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
+ */
 trait HasValidation
 {
     // Validation rule constants
@@ -19,6 +29,8 @@ trait HasValidation
     public const VALIDATE_MAX = 'max';
     public const VALIDATE_UNIQUE = 'unique';
     public const VALIDATE_MATCH = 'match';
+    public const VALIDATE_REGEX = 'regex';
+    public const VALIDATE_CUSTOM = 'custom';
 
     /** @var array $errors An array to store validation errors */
     public array $errors = [];
@@ -62,6 +74,8 @@ trait HasValidation
             self::VALIDATE_MAX => 'Maximum length of this field must be {max}',
             self::VALIDATE_MATCH => 'This field must match {match}',
             self::VALIDATE_UNIQUE => 'Record with this {field} already exists',
+            self::VALIDATE_REGEX => 'This field format is invalid',
+            self::VALIDATE_CUSTOM => 'This field does not meet the custom validation criteria'
         ];
     }
 
@@ -131,10 +145,10 @@ trait HasValidation
      * @param array  $params Additional parameters for the error message.
      * @return void
      */
-    protected function addErrorByRule(string $attribute, string $rule, $params = [])
+    protected function addErrorByRule(string $attribute, string $rule, $customMessage = null, $params = [])
     {
         $params['field'] ??= $attribute;
-        $errorMessage = $this->errorMessage($rule);
+        $errorMessage = $customMessage ?? $this->errorMessage($rule);
 
         foreach ($params as $key => $value) {
             $errorMessage = str_replace("{{$key}}", $value, $errorMessage);
@@ -161,52 +175,70 @@ trait HasValidation
                     continue;
                 }
 
+                $customMessage = is_array($rule)
+                    ? array_key_exists('message', $rule)
+                        ? $rule['message']
+                        : null
+                    : null;
+
                 if ($ruleName === self::VALIDATE_REQUIRED && !$value) {
-                    $this->addErrorByRule($attribute, self::VALIDATE_REQUIRED);
+                    $this->addErrorByRule($attribute, self::VALIDATE_REQUIRED, $customMessage);
                 }
 
                 if ($ruleName === self::VALIDATE_INT && !filter_var($value, FILTER_VALIDATE_INT)) {
-                    $this->addErrorByRule($attribute, self::VALIDATE_INT);
+                    $this->addErrorByRule($attribute, self::VALIDATE_INT, $customMessage);
                 }
 
                 if ($ruleName === self::VALIDATE_DECIMAL && !filter_var($value, FILTER_VALIDATE_FLOAT)) {
-                    $this->addErrorByRule($attribute, self::VALIDATE_DECIMAL);
+                    $this->addErrorByRule($attribute, self::VALIDATE_DECIMAL, $customMessage);
                 }
 
                 if ($ruleName === self::VALIDATE_BOOL) {
                     if (is_null($value)) {
                         $this->addErrorByRule($attribute, self::VALIDATE_REQUIRED);
                     } elseif (!is_bool(filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE))) {
-                        $this->addErrorByRule($attribute, self::VALIDATE_BOOL);
+                        $this->addErrorByRule($attribute, self::VALIDATE_BOOL, $customMessage);
                     }
                 }
 
                 if ($ruleName === self::VALIDATE_EMAIL && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                    $this->addErrorByRule($attribute, self::VALIDATE_EMAIL);
+                    $this->addErrorByRule($attribute, self::VALIDATE_EMAIL, $customMessage);
                 }
 
                 if ($ruleName === self::VALIDATE_URL && !filter_var($value, FILTER_VALIDATE_URL)) {
-                    $this->addErrorByRule($attribute, self::VALIDATE_URL);
+                    $this->addErrorByRule($attribute, self::VALIDATE_URL, $customMessage);
                 }
 
                 if ($ruleName === self::VALIDATE_DOMAIN && !filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
-                    $this->addErrorByRule($attribute, self::VALIDATE_DOMAIN);
+                    $this->addErrorByRule($attribute, self::VALIDATE_DOMAIN, $customMessage);
                 }
 
                 if ($ruleName === self::VALIDATE_IP && !filter_var($value, FILTER_VALIDATE_IP)) {
-                    $this->addErrorByRule($attribute, self::VALIDATE_IP);
+                    $this->addErrorByRule($attribute, self::VALIDATE_IP, $customMessage);
                 }
 
                 if ($ruleName === self::VALIDATE_MIN && strlen($value) < $rule['min']) {
-                    $this->addErrorByRule($attribute, self::VALIDATE_MIN, ['min' => $rule['min']]);
+                    $this->addErrorByRule($attribute, self::VALIDATE_MIN, $customMessage, ['min' => $rule['min']]);
                 }
 
                 if ($ruleName === self::VALIDATE_MAX && strlen($value) > $rule['max']) {
-                    $this->addErrorByRule($attribute, self::VALIDATE_MAX, ['max' => $rule['max']]);
+                    $this->addErrorByRule($attribute, self::VALIDATE_MAX, $customMessage, ['max' => $rule['max']]);
                 }
 
                 if ($ruleName === self::VALIDATE_MATCH && $value !== $this->{$rule['match']}) {
-                    $this->addErrorByRule($attribute, self::VALIDATE_MATCH, ['match' => $rule['match']]);
+                    $this->addErrorByRule($attribute, self::VALIDATE_MATCH, $customMessage, ['match' => $rule['match']]);
+                }
+
+                if ($ruleName === self::VALIDATE_REGEX && !preg_match($rule['pattern'] ?? '//', (string) $value)) {
+                    $this->addErrorByRule($attribute, self::VALIDATE_REGEX, $customMessage);
+                }
+
+                if ($ruleName === self::VALIDATE_CUSTOM) {
+                    if (isset($rule['callback']) && is_callable($rule['callback'])) {
+                        if (!$rule['callback']($value)) {
+                            $this->addErrorByRule($attribute, self::VALIDATE_CUSTOM, $customMessage);
+                        }
+                    }
                 }
 
                 if ($ruleName === self::VALIDATE_UNIQUE) {
@@ -223,16 +255,18 @@ trait HasValidation
                         $sql .= " AND $pkName <> :pkValue";
                     }
 
-                    $statement = Lalaz::getInstance()->db->prepare($sql);
+                    $statement = Lalaz::db()->prepare($sql);
                     $statement->bindValue(":$uniqueAttr", $value);
+
                     if ($pkValue > 0) {
                         $statement->bindValue(":pkValue", $pkValue);
                     }
+
                     $statement->execute();
                     $record = $statement->fetchObject();
 
                     if ($record) {
-                        $this->addErrorByRule($attribute, self::VALIDATE_UNIQUE, ['field' => $attribute]);
+                        $this->addErrorByRule($attribute, self::VALIDATE_UNIQUE, $rule['message'], ['field' => $attribute]);
                     }
                 }
             }

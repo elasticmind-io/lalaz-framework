@@ -76,7 +76,7 @@ trait DatabaseWritable
             $primaryKey = static::primaryKey();
 
             if (is_string($primaryKey) && empty($this->$primaryKey)) {
-                $this->$primaryKey = Lalaz::getInstance()->db->lastInsertId();
+                $this->$primaryKey = Lalaz::db()->lastInsertId();
             }
 
             $this->exists = true;
@@ -119,9 +119,6 @@ trait DatabaseWritable
         $whereClause = $this->buildWhereClause($primaryKey);
 
         $sql = "UPDATE $tableName SET $setClause WHERE $whereClause";
-
-        die($sql);
-
         $statement = static::prepare($sql);
 
         foreach ($attributes as $attribute => $value) {
@@ -222,5 +219,61 @@ trait DatabaseWritable
     public function isDirty(): bool
     {
         return !empty($this->dirty);
+    }
+
+    /**
+     * Update model's timestamp
+     *
+     * @return bool
+     */
+    public function touch(): bool
+    {
+        $this->updateTimestamps();
+        return $this->performUpdate();
+    }
+
+    /**
+     * Performs a partial update,
+     * without having to load the entire entity into memory.
+     *
+     * @param string $table      The name of the table to update.
+     * @param array  $data       Associative array of columns and values to set.
+     *                           Example: [ 'column1' => 'value1', 'column2' => 'value2' ]
+     * @param array  $conditions Associative array of columns and values for the WHERE clause.
+     *                           Example: [ 'id' => 123, 'status' => 'active' ]
+     * @return int               Number of affected rows.
+     *
+     * @throws \InvalidArgumentException If no conditions are provided.
+     */
+    public static function partialUpdate(array $data, array $conditions): int
+    {
+        $tableName = static::tableName();
+        $setParts = [];
+
+        foreach ($data as $column => $value) {
+            $setParts[] = "{$column} = :{$column}";
+        }
+
+        $setClause = implode(', ', $setParts);
+        $whereParts = [];
+
+        foreach ($conditions as $column => $value) {
+            $whereParts[] = "{$column} = :{$column}";
+        }
+
+        if (count($whereParts) === 0) {
+            throw new \InvalidArgumentException(
+                "It is highly recommended to have at least one condition for the UPDATE."
+            );
+        }
+
+        $whereClause = implode(' AND ', $whereParts);
+
+        $sql = "UPDATE {$tableName} SET {$setClause} WHERE {$whereClause}";
+
+        $stmt = static::prepareAndBindParameters($sql, array_merge($data, $conditions));
+        $stmt->execute();
+
+        return $stmt->rowCount();
     }
 }

@@ -6,6 +6,16 @@ use PDOStatement;
 
 use Lalaz\Lalaz;
 
+/**
+ * Trait DatabaseQueryable
+ *
+ * Provides querying functionality for ActiveRecord models, including support
+ * for executing raw SQL queries and determining if a model exists in the database.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
+ */
 trait DatabaseQueryable
 {
     /** @var bool Indicates if the model exists in the database. */
@@ -52,7 +62,7 @@ trait DatabaseQueryable
      */
     protected static function prepare(string $sql): PDOStatement
     {
-        return Lalaz::getInstance()->db->prepare($sql);
+        return Lalaz::db()->prepare($sql);
     }
 
     /**

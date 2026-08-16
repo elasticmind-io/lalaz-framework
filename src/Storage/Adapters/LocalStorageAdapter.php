@@ -2,7 +2,8 @@
 
 namespace Lalaz\Storage\Adapters;
 
-use Lalaz\IO\Directory;
+use Exception;
+use Lalaz\Support\Directory;
 use Lalaz\Storage\Contracts\StorageInterface;
 
 /**
@@ -26,9 +27,13 @@ class LocalStorageAdapter implements StorageInterface
      *
      * @param string $basePath The base path for storing files.
      */
-    public function __construct(string $basePath)
+    public function __construct($config = array())
     {
-        $this->basePath = rtrim($basePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        if (!array_key_exists('path', $config)) {
+            throw new Exception('STORAGE_CONFIG path was not provided.');
+        }
+
+        $this->basePath = rtrim($config['path'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
     }
 
     /**
@@ -66,7 +71,10 @@ class LocalStorageAdapter implements StorageInterface
      */
     public function delete(string $path): bool
     {
-        return unlink($this->basePath . ltrim($path, '/'));
+        if (file_exists($path)) return unlink($path);
+        $file = $this->basePath . ltrim($path, '/');
+        if (file_exists($file)) return unlink($file);
+        return false;
     }
 
     /**
@@ -77,7 +85,8 @@ class LocalStorageAdapter implements StorageInterface
      */
     public function getPublicUrl(string $path): string
     {
-        return '/public/static/' . ltrim($path, '/');
+        $basePublicUrl = rtrim(config('STORAGE_PUBLIC_URL'), '/') . '/';
+        return $basePublicUrl . ltrim($path, '/');
     }
 
     /**
@@ -95,8 +104,8 @@ class LocalStorageAdapter implements StorageInterface
             : '';
 
         $extension = isset($pathInfo['extension']) ? '.' . $pathInfo['extension'] : '';
-        $uniqueName = uniqid('', true);
+        $uniqueName = str_replace('.', 'ts', uniqid('', true));
 
-        return $subPath . $uniqueName . $extension;
+        return "{$subPath}{$uniqueName}{$extension}";
     }
 }

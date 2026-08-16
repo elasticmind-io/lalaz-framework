@@ -2,6 +2,17 @@
 
 namespace Lalaz\Data\Concerns;
 
+/**
+ * Trait HasFillableAttributes
+ *
+ * Provides mass assignment functionality for ActiveRecord models,
+ * allowing attributes to be filled from an array while protecting
+ * against unintended mass assignment vulnerabilities.
+ *
+ * @package elasticmind\lalaz-framework
+ * @author  Elasticmind <ola@elasticmind.io>
+ * @link    https://lalaz.dev
+ */
 trait HasFillableAttributes
 {
     /** @var array The attributes that are mass assignable. */

@@ -3,17 +3,11 @@
 namespace Lalaz\Data;
 
 use Exception;
-use PDO;
-use PDOStatement;
-use PDOException;
 
 use Lalaz\Lalaz;
-
-use Lalaz\Data\Query\Queries;
-use Lalaz\Data\Query\Expr;
-use Lalaz\Data\Query\Expressions;
-use Lalaz\Data\Query\QueryBuilderInterface;
-
+use Lalaz\Validation\Concerns\Serializable;
+use Lalaz\Validation\Concerns\HasValidation;
+use Lalaz\Validation\Concerns\HasAttributes;
 use Lalaz\Data\Concerns\Presentable;
 use Lalaz\Data\Concerns\DatabaseQueryable;
 use Lalaz\Data\Concerns\DatabaseReadable;
@@ -32,14 +26,20 @@ use Lalaz\Data\Concerns\HasFillableAttributes;
  * @author  Elasticmind <ola@elasticmind.io>
  * @link     https://lalaz.dev
  */
-abstract class ActiveRecord extends Model
+abstract class ActiveRecord
 {
+    use Serializable;
+    use HasValidation;
+    use HasAttributes;
     use Presentable;
     use DatabaseQueryable;
     use DatabaseReadable;
     use DatabaseWritable;
     use HasRelationships;
     use HasFillableAttributes;
+
+    /** @var array The attributes that should be hidden for serialization. */
+    protected array $hidden = [];
 
     /** @var array The attributes that should be cast to native types. */
     protected array $casts = [];
@@ -250,7 +250,7 @@ abstract class ActiveRecord extends Model
      */
     public static function beginTransaction(): void
     {
-        Lalaz::getInstance()->db->beginTransaction();
+        Lalaz::getInstance()->db()->beginTransaction();
     }
 
     /**
@@ -260,7 +260,7 @@ abstract class ActiveRecord extends Model
      */
     public static function commit(): void
     {
-        Lalaz::getInstance()->db->commit();
+        Lalaz::getInstance()->db()->commit();
     }
 
     /**
@@ -270,7 +270,7 @@ abstract class ActiveRecord extends Model
      */
     public static function rollBack(): void
     {
-        Lalaz::getInstance()->db->rollBack();
+        Lalaz::getInstance()->db()->rollBack();
     }
 
     /**
@@ -282,7 +282,7 @@ abstract class ActiveRecord extends Model
      */
     public static function transaction(callable $callback)
     {
-        $db = Lalaz::getInstance()->db;
+        $db = Lalaz::getInstance()->db();
 
         try {
             $db->beginTransaction();

@@ -1,0 +1,47 @@
+name: tests
+
+# A suite existia e passava, mas nada a rodava: e por isso que uma versao saiu
+# chamando um metodo que ela mesma tinha apagado. Este arquivo e a rede.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  pest:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # o composer.json exige ^8.2; testar as pontas evita descobrir
+        # incompatibilidade so quando a hospedagem atualiza o PHP
+        php: ['8.2', '8.3']
+
+    name: PHP ${{ matrix.php }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, pdo, pdo_sqlite, sodium
+          coverage: none
+
+      - name: Cache do composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ matrix.php }}-${{ hashFiles('composer.json') }}
+          restore-keys: composer-${{ matrix.php }}-
+
+      - name: Instalar dependencias
+        run: composer update --prefer-dist --no-progress --no-interaction
+
+      - name: Lint de sintaxe
+        run: find src tests -name '*.php' -print0 | xargs -0 -n1 -P4 php -l > /dev/null
+
+      - name: Testes
+        run: ./vendor/bin/pest --compact

@@ -2,6 +2,8 @@
 
 namespace Lalaz\Security;
 
+use Lalaz\Security\Concerns\PasswordHash;
+
 /**
  * Class Hashing
  *

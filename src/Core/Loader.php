@@ -2,6 +2,7 @@
 
 namespace Lalaz\Core;
 
+use Lalaz\Lalaz;
 use InvalidArgumentException;
 
 /**
@@ -47,5 +48,15 @@ class Loader
     {
         $functionsDirectory = __DIR__ . '/Functions';
         self::loadFiles($functionsDirectory);
+    }
+
+    public static function loadAppConfiguration()
+    {
+        $path = Lalaz::appDirectory() . '/Config';
+        if (!is_dir($path)) {
+            return;
+        }
+
+        self::loadFiles($path);
     }
 }

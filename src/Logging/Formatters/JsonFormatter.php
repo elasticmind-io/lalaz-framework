@@ -2,6 +2,8 @@
 
 namespace Lalaz\Logging\Formatters;
 
+use Lalaz\Logging\Contracts\FormatterInterface;
+
 /**
  * Class JsonFormatter
  *
@@ -23,20 +25,27 @@ class JsonFormatter implements FormatterInterface
      * in ISO 8601 format ('c'). If JSON encoding fails, throws a RuntimeException
      * with the error message.
      *
-     * @param string $level The log level (e.g., 'info', 'error', 'debug').
+     * @param string $level The log level (e.g., 'info', 'error', 'debug', 'warning').
      * @param string $message The main message to be logged.
      * @param array $context Additional context data that provides more information
      *                       about the log entry, such as exception details, user information, etc.
      *
      * @return string A JSON-encoded string representing the log entry.
+     * @throws \RuntimeException If JSON encoding fails.
      */
     public function format(string $level, string $message, array $context = []): string
     {
-        return json_encode([
+        $json = json_encode([
             'timestamp' => date('c'),
             'level' => $level,
             'message' => $message,
             'context' => $context,
-        ]);
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        if ($json === false) {
+            throw new \RuntimeException('Failed to encode log message: ' . json_last_error_msg());
+        }
+
+        return $json;
     }
 }

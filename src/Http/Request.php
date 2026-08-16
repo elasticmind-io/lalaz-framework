@@ -2,6 +2,10 @@
 
 namespace Lalaz\Http;
 
+use stdClass;
+use Lalaz\Exceptions\HttpException;
+use Lalaz\Security\CsrfProtection;
+
 /**
  * Class Request
  *
@@ -13,7 +17,7 @@ namespace Lalaz\Http;
  * @author  Elasticmind <ola@elasticmind.io>
  * @link    https://lalaz.dev
  */
-class Request
+class Request extends stdClass
 {
     /** @var string The HTTP method of the request (GET, POST, etc.) */
     private $method;
@@ -34,7 +38,11 @@ class Request
     private $cookies;
 
     /** @var array List of HTTP methods that require CSRF token validation */
-    private static $methodsToValidateCsrfToken = ['POST', 'PUT', 'PATCH'];
+    /**
+     * DELETE tambem muda estado e estava de fora: uma rota de exclusao
+     * passava sem token nenhum.
+     */
+    private static $methodsToValidateCsrfToken = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
     /**
      * Constructor for the Request class.
@@ -108,6 +116,25 @@ class Request
     }
 
     /**
+     * Returns the the body without sanization.
+     *
+     * @param string $name Optional. The name of the parameter to retrieve.
+     * @return mixed The value of the parameter, or all parameters if no name is provided.
+     */
+    public function unsafeBody($name = '')
+    {
+        if (strlen($name) === 0) {
+            return $_POST;
+        }
+
+        if (array_key_exists($name, $_POST)) {
+            return $_POST[$name];
+        }
+
+        return '';
+    }
+
+    /**
      * Returns a specific cookie by name.
      *
      * @param string $name The name of the cookie.
@@ -132,9 +159,11 @@ class Request
     /**
      * Validates the CSRF token for POST, PUT, and PATCH requests.
      *
-     * If the token in the body does not match the session token, the request is terminated.
+     * Uses HttpOnly cookie-based CSRF protection with token rotation.
+     * If the token in the body/header does not match the cookie token, throws an exception.
      *
      * @return void
+     * @throws HttpException
      */
     public function validateCsrfToken(): void
     {
@@ -142,9 +171,51 @@ class Request
             return;
         }
 
-        if ($this->body()['csrfToken'] !== $this->session('csrfToken')) {
-            die('Request token is not valid!');
+        $headers = $this->getHeaders();
+
+        if (!CsrfProtection::validateToken($this->body(), $headers)) {
+            throw HttpException::csrfMismatch('Invalid CSRF token', [
+                'ip' => $this->ip(),
+                'user_agent' => $this->userAgent(),
+            ]);
         }
+
+        // Rotate token after successful validation on state-changing operations
+        CsrfProtection::rotateToken();
+    }
+
+    /**
+     * Gets the CSRF token for the current request.
+     * Generates one if it doesn't exist.
+     *
+     * @return string The CSRF token
+     */
+    public function csrfToken(): string
+    {
+        return CsrfProtection::getToken();
+    }
+
+    /**
+     * Gets request headers.
+     *
+     * @return array The request headers
+     */
+    private function getHeaders(): array
+    {
+        if ($this->headers !== null) {
+            return $this->headers;
+        }
+
+        $headers = [];
+        foreach ($_SERVER as $key => $value) {
+            if (strpos($key, 'HTTP_') === 0) {
+                $headerName = str_replace('_', '-', substr($key, 5));
+                $headers[$headerName] = $value;
+            }
+        }
+
+        $this->headers = $headers;
+        return $headers;
     }
 
     /**
@@ -160,10 +231,63 @@ class Request
         }
 
         if ($_FILES[$key]['error'] !== UPLOAD_ERR_OK) {
-            echo "Erro no upload: " . $_FILES[$key]['error'];
+            return null;
         }
 
         return new UploadedFile($_FILES[$key]);
+    }
+
+    public function ip(): string
+    {
+        return static::clientIp();
+    }
+
+    /**
+     * Resolve o IP do cliente atravessando proxy.
+     *
+     * Estatico porque o SessionManager precisa do mesmo resultado e nao tem uma
+     * instancia de Request em maos. Duas implementacoes divergiriam, e foi
+     * exatamente isso que aconteceu: o fingerprint de sessao lia REMOTE_ADDR
+     * cru, que atras do Cloudflare e o IP da BORDA — muda de PoP entre
+     * requisicoes e derrubava a sessao sozinho.
+     *
+     * @return string
+     */
+    public static function clientIp(): string
+    {
+        $headers = [
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_CF_CONNECTING_IP',
+            'HTTP_X_REAL_IP',
+            'REMOTE_ADDR'
+        ];
+
+        foreach ($headers as $header) {
+            if (!empty($_SERVER[$header])) {
+                $ipList = explode(',', $_SERVER[$header]);
+                return trim($ipList[0]);
+            }
+        }
+
+        return '0.0.0.0';
+    }
+
+    public function userAgent(): string
+    {
+        return $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
+    }
+
+    public function fingerprint(): string
+    {
+        $ip = $this->ip();
+        $userAgent = $this->userAgent();
+
+        $acceptLanguage = $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'unknown';
+        $screenResolution = $_COOKIE['screen_resolution'] ?? 'unknown';
+        $timezone = $_COOKIE['timezone'] ?? 'unknown';
+
+        $fingerprintData = $ip . $userAgent . $acceptLanguage . $screenResolution . $timezone;
+        return hash('sha256', $fingerprintData);
     }
 
     /**
@@ -194,12 +318,12 @@ class Request
      */
     private function initializeBody(): void
     {
-        if (!empty($_POST)) {
-            $this->body = $this->sanitize($_POST);
+        if (static::isJsonRequest()) {
+            $this->body = json_decode(file_get_contents('php://input'));
             return;
         }
 
-        $this->body = $this->sanitize(json_decode(file_get_contents('php://input')));
+        $this->body = $this->sanitize($_POST);
     }
 
     /**
@@ -211,9 +335,12 @@ class Request
      */
     private function initializeSession(): void
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        // SessionManager::start(), nao session_start() cru. O Router constroi um
+        // Request em toda rota que casa, entao este era SEMPRE o primeiro a
+        // abrir a sessao — com os atributos padrao, sem HttpOnly e sem SameSite.
+        // Quando o SessionManager rodava depois, session_status() ja era ACTIVE
+        // e o bloco inteiro de endurecimento era pulado em silencio.
+        SessionManager::start();
 
         $this->session = $_SESSION;
     }
@@ -237,6 +364,7 @@ class Request
     private function sanitize($data = array()): mixed
     {
         if (empty($data)) return [];
-        return filter_var_array($data, FILTER_SANITIZE_STRING);
+        if (is_object($data)) $data = get_object_vars($data);
+        return filter_var_array($data, FILTER_SANITIZE_SPECIAL_CHARS);
     }
 }

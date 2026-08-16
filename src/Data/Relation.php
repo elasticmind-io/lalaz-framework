@@ -117,14 +117,13 @@ class Relation
                 $relatedKey = $this->ownerKey ?? $relatedModel::primaryKey();
 
                 // Join the pivot table
-                $this->query->join(
-                    $pivotTable,
-                    "$pivotTable.$relatedPivotKey = $tableName.$relatedKey"
+                $this->query->innerJoin(
+                    "$pivotTable ON $pivotTable.$relatedPivotKey = $tableName.$relatedKey"
                 );
 
                 // Where clause on the pivot table
                 $this->query->where("$pivotTable.$foreignPivotKey = :foreignKeyValue");
-                $this->query->parameters(['foreignKeyValue' => $this->localValue]);
+                $this->parameters['foreignKeyValue'] = $this->localValue;
                 break;
         }
     }
@@ -255,6 +254,16 @@ class Relation
     }
 
     /**
+     * Get the related model class name.
+     *
+     * @return string
+     */
+    public function getRelatedClass(): string
+    {
+        return $this->relatedClass;
+    }
+
+    /**
      * Add a JOIN clause to the query.
      *
      * @param string $table      The table to join.
@@ -264,7 +273,20 @@ class Relation
      */
     public function join(string $table, string $condition, string $type = 'INNER'): self
     {
-        $this->getQuery()->innerJoin($table, $condition, $type);
+        $builder = $this->getQuery();
+        $clause = $table . ' ON ' . $condition;
+
+        switch (strtoupper($type)) {
+            case 'LEFT':
+                $builder->leftJoin($clause);
+                break;
+            case 'RIGHT':
+                $builder->rightJoin($clause);
+                break;
+            default:
+                $builder->innerJoin($clause);
+        }
+
         return $this;
     }
 

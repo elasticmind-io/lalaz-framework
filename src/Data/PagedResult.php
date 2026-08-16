@@ -2,6 +2,8 @@
 
 namespace Lalaz\Data;
 
+use \JsonSerializable;
+
 /**
  * Class PagedResult
  *
@@ -13,7 +15,7 @@ namespace Lalaz\Data;
  * @author  Elasticmind <ola@elasticmind.io>
  * @link    https://lalaz.dev
  */
-class PagedResult
+class PagedResult implements JsonSerializable
 {
     /** @var int $totalRecords The total number of records available */
     public int $totalRecords;
@@ -71,5 +73,22 @@ class PagedResult
     public function hasNextPage(): bool
     {
         return $this->currentPage < $this->totalPages();
+    }
+
+    /**
+     * Determines how the object will be serialized.
+     *
+     */
+    public function jsonSerialize(): mixed
+    {
+        return [
+            'totalRecords' => $this->totalRecords,
+            'currentPage' => $this->currentPage,
+            'pageSize' => $this->pageSize,
+            'totalPages' => $this->totalPages(),
+            'hasPreviousPage' => $this->hasPreviousPage(),
+            'hasNextPage' => $this->hasNextPage(),
+            'records' => $this->records
+        ];
     }
 }

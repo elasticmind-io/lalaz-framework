@@ -2,17 +2,17 @@
 
 namespace Lalaz;
 
-use \Throwable;
 use \RuntimeException;
-
 use Lalaz\Core\Loader;
 use Lalaz\Core\Config;
 use Lalaz\Data\Database;
-use Lalaz\Event\EventHub;
+use Lalaz\Data\Adapters\ConnectionAdapterResolver;
+use Lalaz\Events\EventHub;
 use Lalaz\Logging\Logger;
 use Lalaz\Logging\LogToConsole;
 use Lalaz\Routing\Router;
 use Lalaz\View\View;
+use Lalaz\View\TemplateEngine;
 
 /**
  * Class Lalaz
@@ -30,20 +30,20 @@ class Lalaz
     /** @var Lalaz|null $instance The main application instance (singleton) */
     private static ?Lalaz $instance = null;
 
-    /** @var string $rootDir The root directory of the application */
-    public static string $rootDir;
+    /** @var string $appDirectory The root directory of the application */
+    private static string $appDirectory;
+
+    /** @var Logger $logger The Logger instance of the application */
+    private Logger $logger;
 
     /** @var Router $router The router instance responsible for handling routes */
     private Router $router;
 
     /** @var Database $db The database connection instance */
-    public Database $db;
+    private Database $db;
 
     /** @var EventHub $events The EventHub instance for managing events of the application */
-    public EventHub $events;
-
-    /** @var Logger $logger The Logger instance of the application */
-    private $logger;
+    private EventHub $events;
 
     /**
      * Initializes the singleton instance of the Lalaz application.
@@ -51,25 +51,29 @@ class Lalaz
      * Loads environment variables, initializes the database, router, and events
      * instances. If already initialized, returns the existing instance.
      *
-     * @param string $rootDir The root directory of the application.
+     * @param string $appDirectory The root directory of the application.
      * @param Logger|null $logger Optional logger instance. If null, a default logger is created.
      * @return Lalaz The initialized Lalaz instance.
      */
-    public static function initialize(string $rootDir, ?Logger $logger = null): Lalaz
+    public static function initialize(string $appDirectory, ?Logger $logger = null): Lalaz
     {
         if (self::$instance !== null) {
             return self::$instance;
         }
 
+        self::$instance = new self($appDirectory, $logger);
+
         Loader::loadCoreFunctions();
-        Config::load($rootDir . '/.env');
+        Config::load($appDirectory . '/.env');
+        Loader::loadAppConfiguration();
 
-        $db = static::initializeDb();
-        $router = new Router();
-        $events = new EventHub();
+        debug('Initialize Lalaz App');
 
-        self::$instance = new self($rootDir, $logger, $db, $router, $events);
-        self::configureRoutes();
+        self::$instance->router = static::initializeRouter();
+        self::$instance->events = static::initializeEventHub();
+        self::$instance->db = static::initializeDb();
+
+        static::configureRoutes();
 
         return self::$instance;
     }
@@ -85,7 +89,7 @@ class Lalaz
     public static function getInstance(): Lalaz
     {
         if (self::$instance === null) {
-            self::initialize('src/App');
+            self::initialize('src/App', null);
         }
 
         return self::$instance;
@@ -97,24 +101,16 @@ class Lalaz
      * Sets the root directory, logger, database, router, and event manager.
      * It is private to ensure that only one instance (singleton) is created via the initialize method.
      *
-     * @param string $rootDir The root directory of the application.
+     * @param string $appDirectory The root directory of the application.
      * @param Logger|null $logger Optional logger instance.
      * @param Database|null $db Optional database instance.
      * @param Router|null $router Optional router instance.
      * @param EventHub|null $events Optional event hub instance.
      */
-    private function __construct(
-        string $rootDir,
-        ?Logger $logger = null,
-        ?Database $db = null,
-        ?Router $router = null,
-        ?EventHub $events)
+    private function __construct(string $appDirectory, ?Logger $logger = null)
     {
-        self::$rootDir = $rootDir;
+        self::$appDirectory = $appDirectory;
         $this->logger = $logger ?? static::initializeDefaultLogger();
-        $this->db = $db;
-        $this->router = $router;
-        $this->events = $events;
     }
 
     /**
@@ -127,6 +123,8 @@ class Lalaz
      */
     public function run(): void
     {
+        TemplateEngine::init();
+
         ob_start();
 
         list(, $error) = tryCatch(function () {
@@ -156,18 +154,35 @@ class Lalaz
     }
 
     /**
-     * Configures the application routes by calling a user-defined function.
+     * Da a aplicacao a chance de registrar as rotas dela.
      *
-     * If a function called `onRouterInitialized` exists, it is executed to allow
-     * custom route definitions.
+     * O gancho foi removido em algum ponto da develop e nada ocupou o lugar: a
+     * varredura de atributos do Router cobre outro caso de uso, nao este. Toda
+     * aplicacao que declara rotas em Config/routes.php via onRouterInitialized()
+     * — o esqueleto padrao do framework — passava a subir com ZERO rota, e cada
+     * pagina respondia 404 sem nenhum erro que apontasse a causa.
      *
      * @return void
      */
     private static function configureRoutes(): void
     {
+        debug('Configuring App Routes');
+
         if (function_exists('onRouterInitialized')) {
-            onRouterInitialized(self::getInstance()->router);
+            onRouterInitialized();
         }
+    }
+
+    private static function initializeRouter(): Router
+    {
+        debug('Initializing App Router');
+        return new Router();
+    }
+
+    private static function initializeEventHub(): EventHub
+    {
+        debug('Initializing App EventHub');
+        return new EventHub();
     }
 
     /**
@@ -181,27 +196,14 @@ class Lalaz
      */
     private static function initializeDb(): Database
     {
-        $dsn = Config::get('DB_DSN');
-        $user = Config::get('DB_USER');
-        $password = Config::get('DB_PASSWORD');
+        debug('Resolving database adapter...');
+        $adapter = ConnectionAdapterResolver::resolve();
+        return new Database($adapter);
+    }
 
-        if (!$dsn) {
-            throw new RuntimeException('Database configuration variable DB_DSN is missing.');
-        }
-
-        if (!$user) {
-            throw new RuntimeException('Database configuration variable DB_USER is missing.');
-        }
-
-        if (!$password) {
-            throw new RuntimeException('Database configuration variable DB_PASSWORD is missing.');
-        }
-
-        return new Database([
-            'dsn' => $dsn,
-            'user' => $user,
-            'password' => $password,
-        ]);
+    public static function appDirectory(): string
+    {
+        return self::$appDirectory;
     }
 
     /**
@@ -213,16 +215,23 @@ class Lalaz
      * @return Database The database connection instance.
      * @throws RuntimeException If the `.env` file is not found in the expected location.
      */
+    public static function createStandaloneDbInstance(): Database
+    {
+        $appDirectory = 'src/App';
+        $envfile = "{$appDirectory}/.env";
+        Config::load($envfile);
+        Loader::loadCoreFunctions();
+        return static::initializeDb();
+    }
+
+    /**
+     * Retrieves the db instance for the application.
+     *
+     * @return Database The database connection instance.
+     */
     public static function db(): Database
     {
-        $envfile = 'src/App/.env';
-
-        if (!file_exists($envfile)) {
-            throw new RuntimeException('No .env file found in the expected location');
-        }
-
-        Config::load($envfile);
-        return static::initializeDb();
+        return static::getInstance()->db;
     }
 
     /**
@@ -235,7 +244,7 @@ class Lalaz
      */
     public static function router(): Router
     {
-        return Lalaz::getInstance()->router;
+        return static::getInstance()->router;
     }
 
     /**
@@ -248,6 +257,6 @@ class Lalaz
      */
     public static function logger()
     {
-        return Lalaz::getInstance()->logger;
+        return static::getInstance()->logger;
     }
 }

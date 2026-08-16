@@ -147,9 +147,9 @@ class RouteDefinition
      *
      * @return RouteDefinition Returns the current route definition for method chaining.
      */
-    public function useAuthentication(): RouteDefinition
+    public function useAuthentication(string $loginUrl = ''): RouteDefinition
     {
-        $this->middlewares[] = AuthenticationMiddleware::class;
+        $this->middlewares[] = new AuthenticationMiddleware($loginUrl);
         return $this;
     }
 

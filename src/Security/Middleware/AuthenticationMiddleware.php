@@ -6,6 +6,7 @@ use Lalaz\Http\Request;
 use Lalaz\Http\Response;
 use Lalaz\Http\Middleware;
 use Lalaz\Http\SessionManager;
+use Lalaz\Exceptions\HttpException;
 
 /**
  * Class AuthenticationMiddleware
@@ -18,6 +19,13 @@ use Lalaz\Http\SessionManager;
  */
 class AuthenticationMiddleware extends Middleware
 {
+    private string $loginUrl = '';
+
+    public function __construct(string $loginUrl = '')
+    {
+        $this->loginUrl = $loginUrl;
+    }
+
     /**
      * Handle the incoming request to verify user authentication.
      *
@@ -31,8 +39,12 @@ class AuthenticationMiddleware extends Middleware
         $user = SessionManager::get('__luser');
 
         if (!$user) {
-            die('Forbidden');
-            return;
+            if (strlen($this->loginUrl) > 0) {
+                $res->redirect($this->loginUrl);
+                return;
+            }
+
+            throw HttpException::unauthorized('Authentication required');
         }
 
         $req->user = $user;

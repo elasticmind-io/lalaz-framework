@@ -1,8 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace {{namespace}};
 
-use Lalaz\Event\EventListener;
+use Lalaz\Events\EventListener;
 
 class {{name}}Event extends EventListener
 {

@@ -6,9 +6,8 @@ use Throwable;
 use Lalaz\Lalaz;
 use Lalaz\Core\Config;
 use Lalaz\Http\Request;
-use Lalaz\Http\FlashMessage;
-use Twig\Loader\FilesystemLoader;
-use Twig\Environment;
+use Lalaz\Http\Concerns\FlashMessage;
+use Lalaz\View\ViewContext;
 
 /**
  * Class View
@@ -33,26 +32,33 @@ class View
      *
      * @return void
      */
-    public static function render(string $view, array $data = [], $statucCode = 200): void
+    public static function render(string $view, array $data = [], bool $resetContext = true): string
     {
-        $loader = new FilesystemLoader(Lalaz::$rootDir . '/Views');
-        $twig = new Environment($loader);
+        $merged = array_merge($data, ViewContext::resolved());
+        $output = TemplateEngine::getEngine()->render($view, $merged);
 
-        static::attachUtilFunctions($twig);
+        if ($resetContext) {
+            ViewContext::reset();
+        }
 
-        header('Content-Type: text/html');
-        http_response_code($statucCode);
-        echo $twig->render("$view.twig", $data);
+        return $output;
     }
 
-    public static function renderJson(array $data = [], $stausCode = 200): variant_mod
+    /**
+     * Sends a JSON response with the provided data.
+     *
+     * Estatico como o resto da classe: renderError a chama com static::, e
+     * chamada estatica de metodo de instancia e fatal no PHP 8.
+     *
+     * @param array $data The data to send as JSON.
+     * @param int $statusCode The HTTP status code of the response.
+     * @return void
+     */
+    public static function renderJson(array $data = [], int $statusCode = 200): void
     {
-        http_response_code($statucCode);
         header('Content-Type: application/json');
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'An unexpected error occurred. Please try again later.'
-        ]);
+        http_response_code($statusCode);
+        echo json_encode($data);
     }
 
     /**
@@ -64,7 +70,8 @@ class View
      */
     public static function renderNotFound(array $data = []): void
     {
-        static::render('errors/404', $data, 404);
+        http_response_code(404);
+        echo static::render('errors/404', $data);
     }
 
     /**
@@ -74,14 +81,18 @@ class View
      *
      * @return void
      */
-    public static function renderError(array $data = [], Throwable $exception = null): void
+    public static function renderError(
+        array $data = [],
+        ?Throwable $exception = null,
+        int $statusCode = 500
+    ): void
     {
         if (ob_get_length()) {
             ob_clean();
         }
 
         if (Config::isDevelopment() || Config::isDebug()) {
-            static::renderDevelopmentError($exception);
+            static::renderDevelopmentError($exception, $statusCode);
             return;
         }
 
@@ -89,32 +100,16 @@ class View
             static::renderJson([
                 'status' => 'error',
                 'message' => 'An unexpected error occurred. Please try again later.'
-            ], 500);
+            ], $statusCode);
 
             return;
         }
 
-        static::render('errors/500', $data, 500);
+        http_response_code($statusCode);
+        echo static::render('errors/500', $data);
     }
 
-    /**
-     * Attaches utility functions to the Twig environment.
-     *
-     * This method adds custom utility functions like flash messages and route URLs
-     * to the Twig environment, allowing them to be used in view templates.
-     *
-     * @param \Twig\Environment $twig The Twig environment to which the functions are attached.
-     *
-     * @return void
-     */
-    public static function attachUtilFunctions(Environment $twig): void
-    {
-        foreach (Utils::all() as $util) {
-            $twig->addFunction($util);
-        }
-    }
-
-    private static function renderDevelopmentError(Throwable $exception): void
+    private static function renderDevelopmentError(Throwable $exception, int $statusCode = 500): void
     {
         if (Request::isJsonRequest()) {
             static::renderJson([
@@ -128,7 +123,7 @@ class View
             return;
         }
 
-        http_response_code(500);
+        http_response_code($statusCode);
         echo "<h1>Development Error</h1>";
         echo "<p><strong>Message:</strong> " . htmlspecialchars($exception->getMessage()) . "</p>";
         echo "<p><strong>File:</strong> " . htmlspecialchars($exception->getFile()) . "</p>";

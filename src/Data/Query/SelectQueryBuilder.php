@@ -2,6 +2,8 @@
 
 namespace Lalaz\Data\Query;
 
+use Lalaz\Data\Contracts\QueryBuilderInterface;
+
 /**
  * Class SelectQueryBuilder
  *
@@ -87,17 +89,17 @@ class SelectQueryBuilder implements QueryBuilderInterface
             . implode(', ', $this->fields)
             . ' FROM ' . implode(', ', $this->from)
             . ($this->join === [] ? '' : ' ' . implode(' ', $this->join))
-            . ($this->conditions === [] ? '' : ' WHERE ' . implode(' AND ', $this->conditions))
+            . ($this->conditions === [] ? '' : ' WHERE ' . implode(' ', $this->conditions))
             . ($this->groupBy === [] ? '' : ' GROUP BY ' . implode(', ', $this->groupBy))
             . ($this->having === [] ? '' : ' HAVING ' . implode(' AND ', $this->having))
             . ($this->order === [] ? '' : ' ORDER BY ' . implode(', ', $this->order));
 
         if ($this->limit !== null) {
-            $sql .= ' LIMIT ';
-            if ($this->start !== null) {
-                $sql .= $this->start . ', ';
-            }
-            $sql .= $this->limit;
+            $sql .= ' LIMIT ' . $this->limit;
+        }
+
+        if ($this->start !== null) {
+            $sql .= ' OFFSET ' . $this->start;
         }
 
         return trim($sql);
@@ -112,6 +114,9 @@ class SelectQueryBuilder implements QueryBuilderInterface
     public function where(string ...$where): self
     {
         foreach ($where as $arg) {
+            if (!empty($this->conditions)) {
+                $this->conditions[] = 'AND';
+            }
             $this->conditions[] = $arg;
         }
 
@@ -127,6 +132,9 @@ class SelectQueryBuilder implements QueryBuilderInterface
     public function andWhere(string ...$condition): self
     {
         foreach ($condition as $arg) {
+            if (!empty($this->conditions)) {
+                $this->conditions[] = 'AND';
+            }
             $this->conditions[] = $arg;
         }
         return $this;
@@ -142,10 +150,9 @@ class SelectQueryBuilder implements QueryBuilderInterface
     {
         foreach ($condition as $arg) {
             if (!empty($this->conditions)) {
-                $this->conditions[] = "OR $arg";
-            } else {
-                $this->conditions[] = $arg;
+                $this->conditions[] = 'OR';
             }
+            $this->conditions[] = $arg;
         }
         return $this;
     }
@@ -172,6 +179,18 @@ class SelectQueryBuilder implements QueryBuilderInterface
     public function limit(int $limit): self
     {
         $this->limit = $limit;
+        return $this;
+    }
+
+    /**
+     * Sets the OFFSET clause for the query.
+     *
+     * @param int $offset The offset to start returning records from.
+     * @return self Returns the instance for method chaining.
+     */
+    public function offset(int $offset): self
+    {
+        $this->start = $offset;
         return $this;
     }
 
@@ -284,6 +303,128 @@ class SelectQueryBuilder implements QueryBuilderInterface
             $this->having[] = $arg;
         }
 
+        return $this;
+    }
+
+    /**
+     * Get the FROM tables.
+     *
+     * @return array
+     */
+    public function getFrom(): array
+    {
+        return $this->from;
+    }
+
+    /**
+     * Add a subquery to the WHERE clause using EXISTS.
+     *
+     * @param SelectQueryBuilder $subquery The subquery builder
+     * @param bool $not Whether to use NOT EXISTS
+     * @return self
+     */
+    public function whereExists(SelectQueryBuilder $subquery, bool $not = false): self
+    {
+        $operator = $not ? 'NOT EXISTS' : 'EXISTS';
+        $sql = $operator . ' (' . $subquery->build() . ')';
+
+        if (empty($this->conditions)) {
+            $this->conditions[] = $sql;
+        } else {
+            $this->conditions[] = 'AND';
+            $this->conditions[] = $sql;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Add a subquery to the WHERE clause using NOT EXISTS.
+     *
+     * @param SelectQueryBuilder $subquery The subquery builder
+     * @return self
+     */
+    public function whereNotExists(SelectQueryBuilder $subquery): self
+    {
+        return $this->whereExists($subquery, true);
+    }
+
+    /**
+     * Add a subquery to the WHERE clause using IN.
+     *
+     * @param string $column The column to compare
+     * @param SelectQueryBuilder $subquery The subquery builder
+     * @param bool $not Whether to use NOT IN
+     * @return self
+     */
+    public function whereInSubquery(string $column, SelectQueryBuilder $subquery, bool $not = false): self
+    {
+        $operator = $not ? 'NOT IN' : 'IN';
+        $sql = "$column $operator (" . $subquery->build() . ")";
+
+        if (empty($this->conditions)) {
+            $this->conditions[] = $sql;
+        } else {
+            $this->conditions[] = 'AND';
+            $this->conditions[] = $sql;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Add a subquery to the WHERE clause using NOT IN.
+     *
+     * @param string $column The column to compare
+     * @param SelectQueryBuilder $subquery The subquery builder
+     * @return self
+     */
+    public function whereNotInSubquery(string $column, SelectQueryBuilder $subquery): self
+    {
+        return $this->whereInSubquery($column, $subquery, true);
+    }
+
+    /**
+     * Use a subquery in the FROM clause.
+     *
+     * @param SelectQueryBuilder $subquery The subquery builder
+     * @param string $alias The alias for the subquery
+     * @return self
+     */
+    public function fromSubquery(SelectQueryBuilder $subquery, string $alias): self
+    {
+        $sql = '(' . $subquery->build() . ') AS ' . $alias;
+        $this->from[] = $sql;
+        return $this;
+    }
+
+    /**
+     * Add a scalar subquery to the SELECT clause.
+     *
+     * @param SelectQueryBuilder $subquery The subquery builder
+     * @param string $alias The alias for the subquery result
+     * @return self
+     */
+    public function selectSubquery(SelectQueryBuilder $subquery, string $alias): self
+    {
+        $sql = '(' . $subquery->build() . ') AS ' . $alias;
+        $this->fields[] = $sql;
+        return $this;
+    }
+
+    /**
+     * Join with a subquery.
+     *
+     * @param SelectQueryBuilder $subquery The subquery builder
+     * @param string $alias The alias for the subquery
+     * @param string $condition The join condition
+     * @param string $type The join type (INNER, LEFT, RIGHT)
+     * @return self
+     */
+    public function joinSubquery(SelectQueryBuilder $subquery, string $alias, string $condition, string $type = 'INNER'): self
+    {
+        $sql = strtoupper($type) . ' JOIN (' . $subquery->build() . ') AS ' . $alias . ' ON ' . $condition;
+        $this->join[] = $sql;
         return $this;
     }
 }

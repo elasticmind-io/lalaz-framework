@@ -3,8 +3,6 @@
 namespace Lalaz\Storage;
 
 use Lalaz\Storage\Contracts\StorageInterface;
-use Lalaz\Storage\Adapters\LocalStorageAdapter;
-use Lalaz\Storage\Adapters\S3StorageAdapter;
 
 /**
  * Class Storage
@@ -29,6 +27,6 @@ class Storage
     public static function driver(): StorageInterface
     {
         $manager = new StorageManager();
-        return new $manager->getDriver();
+        return $manager->getDriver();
     }
 }

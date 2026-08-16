@@ -1,5 +1,0 @@
-<?php
-
-describe('ActiveRecordUnitTests', function() {
-
-});
