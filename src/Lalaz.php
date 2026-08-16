@@ -73,6 +73,8 @@ class Lalaz
         self::$instance->events = static::initializeEventHub();
         self::$instance->db = static::initializeDb();
 
+        static::configureRoutes();
+
         return self::$instance;
     }
 
@@ -149,6 +151,26 @@ class Lalaz
     {
         return Logger::create()
             ->writeTo(new LogToConsole());
+    }
+
+    /**
+     * Da a aplicacao a chance de registrar as rotas dela.
+     *
+     * O gancho foi removido em algum ponto da develop e nada ocupou o lugar: a
+     * varredura de atributos do Router cobre outro caso de uso, nao este. Toda
+     * aplicacao que declara rotas em Config/routes.php via onRouterInitialized()
+     * — o esqueleto padrao do framework — passava a subir com ZERO rota, e cada
+     * pagina respondia 404 sem nenhum erro que apontasse a causa.
+     *
+     * @return void
+     */
+    private static function configureRoutes(): void
+    {
+        debug('Configuring App Routes');
+
+        if (function_exists('onRouterInitialized')) {
+            onRouterInitialized();
+        }
     }
 
     private static function initializeRouter(): Router
